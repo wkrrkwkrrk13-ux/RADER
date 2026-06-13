@@ -272,4 +272,140 @@ function renderDashboard(){
     if(!sec)return'';
     // 섹터 내 상위 3개 미장 종목
     const topTk=sec.t.map(([sym,desc,kr])=>({sym,change:allData[sym]?.change,kr}))
-      .filter(t=>t.change!=null).sort((a,b)=>b.change-a.ch
+      .filter(t=>t.change!=null).sort((a,b)=>b.change-a.change).slice(0,3);
+    // 국장 종목 취합 (중복제거)
+    const krSet=new Set();
+    topTk.forEach(t=>t.kr.split('/').forEach(k=>k!=='미장흐름만'&&krSet.add(k)));
+    const krList=[...krSet].slice(0,4);
+    const sign=x.avg>=0?'+':'';
+    return `<div class="kr-item">
+      <div class="kr-sector">${x.n}</div>
+      <div class="kr-trigger">${topTk.map(t=>`${t.sym} ${fmtC(t.change)}`).join(' · ')}</div>
+      <div class="kr-stocks">${krList.join(' · ')}</div>
+    </div>`;
+  }).join('');
+}
+
+function scrollTo(name){
+  const id='sc-'+name.replace(/[^a-zA-Z0-9]/g,'_');
+  const el=document.getElementById(id);
+  if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function renderMain(){
+  const container=document.getElementById('main');
+  container.innerHTML=SECTORS.map(s=>{
+    const avg=sectorAvg(s.t);
+    if(curFilter==='up'&&(avg==null||avg<=0))return'';
+    if(curFilter==='dn'&&(avg==null||avg>=0))return'';
+    if(!['all','up','dn'].includes(curFilter)&&!s.grp.includes(curFilter))return'';
+    const avgC=cls(avg);
+    const sign=avg!=null&&avg>=0?'+':'';
+    const avgStr=avg!=null?sign+avg.toFixed(1)+'%':'N/A';
+    const id='sc-'+s.n.replace(/[^a-zA-Z0-9]/g,'_');
+    const rows=s.t.map(([sym,desc,kr])=>{
+      const d=allData[sym];
+      const c=d?.change;
+      const p=d?.price;
+      const v=d?.volume;
+      const cc=cls(c);
+      const ic=intensityCls(c);
+      const pStr=p!=null?'$'+p.toFixed(p>100?0:2):'';
+      return `<div class="tk ${ic}">
+        <div class="tk-top">
+          <span class="tk-sym ${cc}">${sym}</span>
+          <span class="tk-chg ${cc}">${fmtC(c)}</span>
+        </div>
+        <span class="tk-desc">${desc}</span>
+        <span class="tk-kr">${kr}</span>
+        <span class="tk-vol">${pStr} ${fmtV(v)}</span>
+      </div>`;
+    }).join('');
+    return `<div class="sc" id="${id}">
+      <div class="sc-hdr">
+        <span class="sc-name">${s.n}</span>
+        <span class="sc-avg ${avgC}">${avgStr}</span>
+      </div>
+      <div class="tk-grid">${rows}</div>
+    </div>`;
+  }).join('');
+}
+
+function setFilter(f,btn){
+  curFilter=f;
+  document.querySelectorAll('.ftab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  renderMain();
+}
+
+// ── API ──
+async function fetchAll(syms){
+  const res={};
+  const batchSize=20;
+  for(let i=0;i<syms.length;i+=batchSize){
+    const b=syms.slice(i,i+batchSize);
+    document.getElementById('ovTxt').textContent=`수집 중... ${i}/${syms.length}`;
+    try{
+      const r=await fetch(`/api/quote?symbols=${b.join(',')}`);
+      if(r.ok){
+        const d=await r.json();
+        b.forEach(s=>{
+          if(d[s]&&d[s].price!=null)res[s]={price:d[s].price,change:d[s].change,volume:d[s].volume};
+          else res[s]=null;
+        });
+      }
+    }catch{b.forEach(s=>res[s]=null);}
+    if(i+batchSize<syms.length)await new Promise(r=>setTimeout(r,200));
+  }
+  return res;
+}
+
+async function loadData(){
+  const ov=document.getElementById('ov');
+  const btn=document.getElementById('refBtn');
+  ov.classList.remove('hidden');
+  btn.classList.add('loading');
+  try{
+    const syms=[...new Set(SECTORS.flatMap(s=>s.t.map(t=>t[0])))];
+    allData=await fetchAll(syms);
+    const ok=Object.values(allData).filter(v=>v).length;
+    document.getElementById('hdrSub').textContent=`32섹터 · ${ok}개 수집완료`;
+    document.getElementById('footer').textContent=`업데이트: ${new Date().toLocaleString('ko-KR')} | ${ok}/${syms.length}개`;
+    renderDashboard();
+    renderMain();
+  }catch(e){alert('오류: '+e.message);}
+  finally{
+    setTimeout(()=>ov.classList.add('hidden'),300);
+    btn.classList.remove('loading');
+  }
+}
+
+function downloadCSV(){
+  const rows=[['날짜','섹터','티커','설명','국장매핑','등락률%','거래량','가격']];
+  const today=new Date().toLocaleDateString('ko-KR');
+  SECTORS.forEach(s=>s.t.forEach(([sym,desc,kr])=>{
+    const d=allData[sym];
+    rows.push([today,s.n,sym,desc,kr,d?.change!=null?d.change.toFixed(2):'',d?.volume||'',d?.price!=null?d.price.toFixed(2):'']);
+  }));
+  const csv=rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`us_radar_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+
+function initDate(){
+  const inp=document.getElementById('dateInput');
+  const d=new Date();
+  const day=d.getDay();
+  const off=day===0?2:day===6?1:1;
+  d.setDate(d.getDate()-off);
+  inp.value=d.toISOString().split('T')[0];
+}
+
+initDate();
+loadData();
+</script>
+</body>
+</html>

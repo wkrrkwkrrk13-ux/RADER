@@ -244,13 +244,37 @@ function renderDashboard(){
   function sectorTargets(fullName){
     const sec=SECTORS.find(s=>s.n===fullName);
     if(!sec)return {trigger:'',stocks:''};
-    const topTk=sec.t.map(([sym,desc,kr])=>({sym,change:allData[sym]?.change,kr}))
-      .filter(t=>t.change!=null).sort((a,b)=>b.change-a.change).slice(0,3);
-    const krSet=new Set();
-    topTk.forEach(t=>t.kr.split('/').forEach(k=>k!=='미장흐름만'&&krSet.add(k)));
+
+    // 전체 종목 등락률 기준 상위 3개 트리거
+    const allTk=sec.t.map(([sym,desc,kr])=>({sym,change:allData[sym]?.change,kr}))
+      .filter(t=>t.change!=null).sort((a,b)=>b.change-a.change);
+    const topTk=allTk.slice(0,3);
+
+    // 국장 종목별 점수 계산 (빈도 × 평균등락률, 양수만)
+    const krScore={};
+    const krCount={};
+    allTk.forEach(t=>{
+      if(t.change<=0)return; // 하락 종목 제외
+      t.kr.split('/').forEach(k=>{
+        k=k.trim();
+        if(!k||k==='미장흐름만')return;
+        if(!krScore[k]){krScore[k]=0;krCount[k]=0;}
+        krScore[k]+=t.change;
+        krCount[k]++;
+      });
+    });
+
+    // 점수 = 빈도 × 평균등락률
+    const scored=Object.entries(krScore).map(([k,sum])=>({
+      k, score: krCount[k] * (sum/krCount[k]), cnt: krCount[k]
+    })).sort((a,b)=>b.score-a.score);
+
+    // 상위 4개
+    const stocks=scored.slice(0,4).map(x=>x.k).join(' · ') || '미장흐름만';
+
     return {
       trigger: topTk.map(t=>`${t.sym} ${fmtC(t.change)}`).join(' · '),
-      stocks: [...krSet].slice(0,4).join(' · ') || '미장흐름만'
+      stocks
     };
   }
 

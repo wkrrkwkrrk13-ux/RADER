@@ -43,28 +43,31 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'Malgun Go
 .top-title,.kr-title{padding:10px 12px;font-size:13px;font-weight:950;color:var(--accent);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;letter-spacing:-0.2px;}
 .top-title span:last-child{color:var(--muted2);font-size:10px;font-weight:700;}
 
-/* 자금흐름 + 국장타점 통합형: Top3 강조, 4~8 압축 */
-.top5-grid{display:flex;flex-direction:column;gap:6px;padding:9px;background:var(--surface);}
-.top5-item{position:relative;padding:9px 11px;background:var(--surface2);border:1px solid var(--border2);border-radius:12px;cursor:pointer;overflow:hidden;}
+/* 자금흐름 + 국장타점 V5: 좌측 자금흐름 / 우측 트리거·국장매칭 2분할 */
+.top5-grid{display:flex;flex-direction:column;gap:7px;padding:9px;background:var(--surface);}
+.top5-item{position:relative;display:grid;grid-template-columns:minmax(300px,0.9fr) 1.1fr;gap:10px;align-items:center;padding:9px 11px;background:var(--surface2);border:1px solid var(--border2);border-radius:12px;cursor:pointer;overflow:hidden;}
 .top5-item:active{background:var(--surface3);}
+.top5-flow{min-width:0;}
+.top5-signal{min-width:0;border-left:1px solid rgba(255,255,255,0.07);padding-left:10px;}
 .top5-head{display:flex;align-items:center;justify-content:space-between;gap:8px;}
 .top5-left{display:flex;align-items:center;gap:8px;min-width:0;}
 .top5-medal{font-size:17px;line-height:1;min-width:25px;text-align:center;font-weight:950;color:#d6e0f4;}
-.top5-name{font-size:15px;font-weight:950;color:var(--text);letter-spacing:-0.45px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.top5-val{font-size:24px;font-weight:950;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:-1px;line-height:1;}
-.top5-target{margin-top:6px;padding:5px 7px;border-radius:7px;background:rgba(247,200,74,0.07);border:1px solid rgba(247,200,74,0.14);font-size:12px;font-weight:900;color:var(--gold);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.top5-trigger{margin-top:5px;font-size:10px;font-weight:850;color:var(--up);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.top5-bar-wrap{height:7px;background:#081326;border-radius:999px;margin-top:6px;overflow:hidden;border:1px solid rgba(255,255,255,0.04);}
+.top5-name{font-size:16px;font-weight:950;color:var(--text);letter-spacing:-0.45px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.top5-val{font-size:25px;font-weight:950;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:-1px;line-height:1;}
+.top5-target{padding:6px 8px;border-radius:7px;background:rgba(247,200,74,0.07);border:1px solid rgba(247,200,74,0.14);font-size:13px;font-weight:950;color:var(--gold);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.top5-trigger{margin-bottom:5px;font-size:11px;font-weight:900;color:var(--up);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.top5-bar-wrap{height:7px;background:#081326;border-radius:999px;margin-top:7px;overflow:hidden;border:1px solid rgba(255,255,255,0.04);}
 .top5-bar{height:100%;border-radius:999px;background:linear-gradient(90deg,rgba(255,77,103,0.6),var(--up));}
 .top5-item:nth-child(1){background:linear-gradient(135deg,#16213a 0%,#201d2b 100%);border-color:rgba(247,200,74,0.52);box-shadow:0 0 15px rgba(247,200,74,0.08);}
-.top5-item:nth-child(1) .top5-val{color:var(--gold);font-size:29px;}
-.top5-item:nth-child(1) .top5-name{font-size:17px;}
-.top5-item:nth-child(n+4){padding:7px 10px;}
-.top5-item:nth-child(n+4) .top5-name{font-size:13px;color:#c9d3ea;}
-.top5-item:nth-child(n+4) .top5-val{font-size:18px;}
-.top5-item:nth-child(n+4) .top5-target{font-size:11px;padding:4px 6px;margin-top:5px;}
-.top5-item:nth-child(n+4) .top5-trigger{display:none;}
+.top5-item:nth-child(1) .top5-val{color:var(--gold);font-size:30px;}
+.top5-item:nth-child(1) .top5-name{font-size:18px;}
+.top5-item:nth-child(n+4){padding:7px 10px;grid-template-columns:minmax(260px,0.85fr) 1.15fr;}
+.top5-item:nth-child(n+4) .top5-name{font-size:14px;color:#c9d3ea;}
+.top5-item:nth-child(n+4) .top5-val{font-size:19px;}
+.top5-item:nth-child(n+4) .top5-target{font-size:12px;padding:5px 7px;}
+.top5-item:nth-child(n+4) .top5-trigger{font-size:10px;margin-bottom:4px;}
 .top5-item:nth-child(n+4) .top5-bar-wrap{height:5px;margin-top:5px;}
+@media(max-width:760px){.top5-item{grid-template-columns:1fr;gap:7px}.top5-signal{border-left:0;padding-left:0;border-top:1px solid rgba(255,255,255,0.07);padding-top:7px}.top5-trigger{display:block}}
 
 /* 오늘의 대장: 공백 줄인 히어로 + TOP10 */
 .leaders-grid{display:grid;grid-template-columns:0.82fr 1.25fr;gap:8px;padding:9px;background:var(--surface);}
@@ -245,16 +248,20 @@ function renderDashboard(){
     const w=Math.max(8,Math.min(100,Math.abs(x.avg)/maxAvg*100));
     const tg=sectorTargets(x.full);
     return `<div class="top5-item" onclick="scrollToSector('${x.full}')">
-      <div class="top5-head">
-        <div class="top5-left">
-          <span class="top5-medal">${medals[i]}</span>
-          <span class="top5-name">${x.n}</span>
+      <div class="top5-flow">
+        <div class="top5-head">
+          <div class="top5-left">
+            <span class="top5-medal">${medals[i]}</span>
+            <span class="top5-name">${x.n}</span>
+          </div>
+          <span class="top5-val ${cc}">${sign}${x.avg.toFixed(1)}%</span>
         </div>
-        <span class="top5-val ${cc}">${sign}${x.avg.toFixed(1)}%</span>
+        <div class="top5-bar-wrap"><div class="top5-bar" style="width:${w}%"></div></div>
       </div>
-      <div class="top5-trigger">${tg.trigger}</div>
-      <div class="top5-target">🎯 ${tg.stocks}</div>
-      <div class="top5-bar-wrap"><div class="top5-bar" style="width:${w}%"></div></div>
+      <div class="top5-signal">
+        <div class="top5-trigger">${tg.trigger}</div>
+        <div class="top5-target">🎯 ${tg.stocks}</div>
+      </div>
     </div>`;
   }).join('');
 

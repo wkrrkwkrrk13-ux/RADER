@@ -228,6 +228,12 @@ function sectorAvg(tickers){
   const vals=tickers.map(([s])=>allData[s]?.change).filter(v=>v!=null);
   return vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:null;
 }
+function sectorDiffusion(tickers){
+  const vals=tickers.map(([s])=>allData[s]?.change).filter(v=>v!=null);
+  if(!vals.length)return null;
+  const up=vals.filter(v=>v>0).length;
+  return {up, total:vals.length};
+}
 
 function renderDashboard(){
   const medals=['🥇','🥈','🥉','4위','5위','6위','7위','8위'];
@@ -260,7 +266,10 @@ function renderDashboard(){
             <span class="top5-medal">${medals[i]}</span>
             <span class="top5-name">${x.n}</span>
           </div>
-          <span class="top5-val ${cc}">${sign}${x.avg.toFixed(1)}%</span>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span class="top5-val ${cc}">${sign}${x.avg.toFixed(1)}%</span>
+            <span style="font-size:11px;font-weight:700;color:#6e7d98;">${(()=>{const d=sectorDiffusion(SECTORS.find(s=>s.n===x.full).t);return d?d.up+'/'+d.total:'';})()}</span>
+          </div>
         </div>
         <div class="top5-bar-wrap"><div class="top5-bar" style="width:${w}%"></div></div>
       </div>
@@ -274,7 +283,7 @@ function renderDashboard(){
   const allTickers=[];
   SECTORS.forEach(s=>s.t.forEach(([sym,desc,kr])=>{
     const d=allData[sym];
-    if(d?.change!=null)allTickers.push({sym,kr,change:d.change});
+    if(d?.change!=null)allTickers.push({sym,kr,change:d.change,sec:s.n.replace(/^[A-Z]\. /,'')});
   }));
   const leaders=allTickers.sort((a,b)=>b.change-a.change).slice(0,10);
   const hero=leaders[0];
@@ -284,12 +293,16 @@ function renderDashboard(){
       <div class="leader-hero-label">오늘의 1등</div>
       <div class="leader-hero-sym">${hero.sym}</div>
       <div class="leader-hero-chg">${fmtC(hero.change)}</div>
+      <div class="leader-hero-sec" style="font-size:10px;color:#6e7d98;font-weight:700;margin-bottom:2px;">${hero.sec}</div>
       <div class="leader-hero-kr">${hero.kr}</div>
     </div>
     <div class="leader-list">
       ${rest.map((x,i)=>`<div class="leader-item ${intensityCls(x.change)}">
         <span class="leader-rank">${i+2}</span>
-        <span class="leader-sym">${x.sym}</span>
+        <div style="display:flex;flex-direction:column;flex:1;min-width:0;">
+          <span class="leader-sym">${x.sym}</span>
+          <span style="font-size:9px;color:#6e7d98;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${x.sec}</span>
+        </div>
         <span class="leader-chg ${cls(x.change)}">${fmtC(x.change)}</span>
       </div>`).join('')}
     </div>`:'';

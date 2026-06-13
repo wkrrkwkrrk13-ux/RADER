@@ -291,18 +291,14 @@ function renderDashboard(){
   document.getElementById('leadersGrid').innerHTML=hero?`
     <div class="leader-hero">
       <div class="leader-hero-label">오늘의 1등</div>
-      <div class="leader-hero-sym">${hero.sym}</div>
+      <div class="leader-hero-sym">${hero.sym} <span style="font-size:15px;font-weight:700;color:#8fa0bd;">${hero.sec}</span></div>
       <div class="leader-hero-chg">${fmtC(hero.change)}</div>
-      <div class="leader-hero-sec" style="font-size:10px;color:#6e7d98;font-weight:700;margin-bottom:2px;">${hero.sec}</div>
       <div class="leader-hero-kr">${hero.kr}</div>
     </div>
     <div class="leader-list">
       ${rest.map((x,i)=>`<div class="leader-item ${intensityCls(x.change)}">
         <span class="leader-rank">${i+2}</span>
-        <div style="display:flex;flex-direction:column;flex:1;min-width:0;">
-          <span class="leader-sym">${x.sym}</span>
-          <span style="font-size:9px;color:#6e7d98;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${x.sec}</span>
-        </div>
+        <span class="leader-sym">${x.sym} <span style="font-weight:700;color:#8fa0bd;">${x.sec}</span></span>
         <span class="leader-chg ${cls(x.change)}">${fmtC(x.change)}</span>
       </div>`).join('')}
     </div>`:'';

@@ -57,8 +57,8 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'Malgun Go
 .top5-medal{font-size:15px;line-height:1;min-width:26px;text-align:center;font-weight:950;color:#d6e0f4;}
 .top5-name{font-size:15px;font-weight:950;color:var(--text);letter-spacing:-0.45px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .top5-val{font-size:21px;font-weight:950;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:-0.9px;line-height:1;color:#f2f6ff;}
-.top5-trigger{min-width:0;padding:10px 10px;display:flex;align-items:center;font-size:15px;font-weight:950;color:var(--up);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.2;border-right:1px solid rgba(247,200,74,0.18);}
-.top5-target{min-width:0;padding:10px 10px;display:flex;align-items:center;background:rgba(247,200,74,0.055);font-size:14px;font-weight:950;color:var(--gold);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.2;}
+.top5-trigger{min-width:0;padding:10px 10px;display:flex;align-items:center;font-size:clamp(10px,2vw,15px);font-weight:950;color:var(--up);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.2;border-right:1px solid rgba(247,200,74,0.18);}
+.top5-target{min-width:0;padding:10px 10px;display:flex;align-items:center;background:rgba(247,200,74,0.055);font-size:clamp(9px,2vw,14px);font-weight:950;color:var(--gold);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.2;}
 .top5-bar-wrap{height:5px;background:#07101f;border-radius:999px;margin-top:6px;overflow:hidden;border:1px solid rgba(255,255,255,0.04);}
 .top5-bar{height:100%;border-radius:999px;background:linear-gradient(90deg,#2b95ff,#7c5cff);}
 .top5-item:nth-child(1){background:linear-gradient(135deg,#16213a 0%,#151d32 100%);border-color:rgba(247,200,74,0.50);box-shadow:0 0 15px rgba(247,200,74,0.06);}
@@ -73,7 +73,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'Malgun Go
 .top5-item:nth-child(n+4) .top5-trigger{font-size:14px;padding:8px 10px;}
 .top5-item:nth-child(n+4) .top5-target{font-size:13px;padding:8px 10px;}
 .top5-item:nth-child(n+4) .top5-bar-wrap{height:4px;margin-top:5px;}
-@media(max-width:760px){.top5-grid{gap:7px}.top5-item{grid-template-columns:1fr;border-bottom-width:1px;border-radius:13px;min-height:auto}.top5-flow{border-right:0;border-bottom:1px solid rgba(120,150,205,0.22);padding:8px}.top5-signal{grid-template-columns:1fr 1fr}.top5-trigger,.top5-target{padding:8px;font-size:13px}.top5-target{font-size:12.5px}.top-title,.kr-title{font-size:18px}}
+@media(max-width:760px){.top5-grid{gap:7px}.top5-item{grid-template-columns:1fr;border-bottom-width:1px;border-radius:13px;min-height:auto}.top5-flow{border-right:0;border-bottom:1px solid rgba(120,150,205,0.22);padding:8px}.top5-signal{grid-template-columns:1fr 1fr}.top5-trigger,.top5-target{padding:8px;font-size:clamp(9px,2.5vw,13px)}.top5-target{font-size:clamp(8px,2.2vw,12.5px)}.top-title,.kr-title{font-size:18px}}
 
 /* 오늘의 대장: 공백 줄인 히어로 + TOP10 */
 .leaders-grid{display:grid;grid-template-columns:0.82fr 1.25fr;gap:8px;padding:9px;background:var(--surface);}
@@ -114,8 +114,8 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'Malgun Go
 .tk-top{display:flex;justify-content:space-between;align-items:flex-start;gap:4px;}
 .tk-sym{font-size:16px;font-weight:950;color:#fff;letter-spacing:-0.3px;}
 .tk-chg{font-size:19px;font-weight:950;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:-1px;line-height:1;}
-.tk-desc{font-size:10px;color:#8fa0bd;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.tk-kr{font-size:11px;color:var(--gold);font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:4px 6px;background:rgba(247,200,74,0.075);border-radius:6px;border:1px solid rgba(247,200,74,0.16);margin-top:1px;}
+.tk-desc{font-size:clamp(7px,1.8vw,10px);color:#8fa0bd;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.tk-kr{font-size:clamp(7px,1.8vw,11px);color:var(--gold);font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:3px 5px;background:rgba(247,200,74,0.075);border-radius:6px;border:1px solid rgba(247,200,74,0.16);margin-top:1px;}
 .tk-kr::before{content:'🎯 ';}
 .tk-vol{font-size:9.5px;color:var(--muted2);margin-top:auto;display:flex;justify-content:space-between;}
 .up{color:var(--up);} .dn{color:var(--down);} .fl{color:#70809b;}

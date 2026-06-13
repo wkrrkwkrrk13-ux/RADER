@@ -260,6 +260,15 @@ function setFilter(f,btn){
 
 // ── API 호출 ──
 async function fetchOne(sym){
+  // Vercel API 경유
+  try{
+    const r=await fetch(`/api/quote?symbol=${sym}`);
+    if(r.ok){
+      const d=await r.json();
+      if(d.price)return{price:d.price,change:d.change,volume:d.volume};
+    }
+  }catch{}
+  // 직접 호출 폴백
   const urls=[
     `https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=5d&corsDomain=finance.yahoo.com`,
     `https://query2.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=5d`,

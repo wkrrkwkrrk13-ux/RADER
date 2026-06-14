@@ -125,6 +125,16 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'Malgun Go
 @keyframes spin{to{transform:rotate(360deg);}}
 .spin-txt{font-size:12px;font-weight:800;color:var(--accent);}
 .footer{text-align:center;font-size:10px;color:var(--muted);padding:10px;border-top:1px solid var(--border);background:var(--surface);}
+.dual-col{display:grid;grid-template-columns:1fr 1px 1fr;gap:0;}
+.dual-panel{min-width:0;}
+.dual-divider{background:var(--border);margin:8px 0;}
+.dual-label{font-size:10px;font-weight:900;padding:6px 16px;letter-spacing:0.5px;}
+.close-label{color:#7c9cbf;background:rgba(43,149,255,0.06);border-bottom:1px solid rgba(43,149,255,0.15);}
+.live-label{color:#f7c84a;background:rgba(247,200,74,0.06);border-bottom:1px solid rgba(247,200,74,0.15);}
+.sub-tab-row{display:flex;gap:6px;padding:8px 10px;background:var(--surface);border-bottom:1px solid var(--border);}
+.sub-tab{padding:5px 14px;border-radius:8px;font-size:11px;font-weight:900;background:var(--surface2);border:1px solid var(--border);color:#9aa7c4;cursor:pointer;}
+.sub-tab.active{background:rgba(247,200,74,0.15);border-color:rgba(247,200,74,0.4);color:var(--accent);}
+@media(max-width:760px){.dual-col{grid-template-columns:1fr;}.dual-divider{height:1px;width:auto;margin:0;}}
 </style>
 </head>
 <body>
@@ -152,16 +162,38 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'Malgun Go
 </div>
 
 <div class="dashboard">
-  <div class="top-section">
-    <div class="top-title"><span>⚡ 자금흐름 + 🎯 국장타점</span><span style="color:var(--muted);font-weight:400;">Top 8</span></div>
-    <div class="top5-grid" id="top5Grid"></div>
-  </div>
-  <div class="top-section">
-    <div class="top-title"><span>🔥 오늘의 대장주 TOP10</span><span style="color:var(--muted);font-weight:400;">미장 개별 대장</span></div>
-    <div class="leaders-grid" id="leadersGrid"></div>
+  <div class="dual-col">
+    <div class="dual-panel">
+      <div class="dual-label close-label">📌 종가 기준</div>
+      <div class="top-section">
+        <div class="top-title"><span>⚡ 자금흐름 + 🎯 국장타점</span><span style="color:var(--muted);font-weight:400;">Top 8</span></div>
+        <div class="top5-grid" id="top5Grid"></div>
+      </div>
+      <div class="top-section">
+        <div class="top-title"><span>🔥 오늘의 대장주 TOP10</span><span style="color:var(--muted);font-weight:400;">미장 개별 대장</span></div>
+        <div class="leaders-grid" id="leadersGrid"></div>
+      </div>
+    </div>
+    <div class="dual-divider"></div>
+    <div class="dual-panel">
+      <div class="dual-label live-label">⚡ 현재가 기준</div>
+      <div class="top-section">
+        <div class="top-title"><span>⚡ 자금흐름 + 🎯 국장타점</span><span style="color:var(--muted);font-weight:400;">Top 8</span></div>
+        <div class="top5-grid" id="top5GridLive"></div>
+      </div>
+      <div class="top-section">
+        <div class="top-title"><span>🔥 오늘의 대장주 TOP10</span><span style="color:var(--muted);font-weight:400;">미장 개별 대장</span></div>
+        <div class="leaders-grid" id="leadersGridLive"></div>
+      </div>
+    </div>
   </div>
 </div>
 
+<div class="sub-tab-row">
+  <span style="font-size:10px;font-weight:700;color:var(--muted);padding:5px 4px;">섹터 기준:</span>
+  <div class="sub-tab active" onclick="setSubTab('close',this)">📌 종가</div>
+  <div class="sub-tab" onclick="setSubTab('live',this)">⚡ 현재가</div>
+</div>
 <div class="filter-row">
   <div class="ftab active" onclick="setFilter('all',this)">전체</div>
   <div class="ftab" onclick="setFilter('kr',this)">국장영향</div>
@@ -213,7 +245,7 @@ const SECTORS=[
   {n:"L. 원자재/구리/금",grp:['all','kr'],t:[["FCX","구리채굴 대장","풍산/고려아연/LS"],["NEM","금채굴 대장","고려아연"],["GOLD","금채굴","고려아연"],["AA","알루미늄","조일알미늄/POSCO홀딩스"],["RIO","글로벌광산","POSCO홀딩스/고려아연"],["SCCO","구리채굴","풍산/이구산업/대창"],["NUE","철강 대장","POSCO홀딩스/현대제철"],["CLF","철강/광산","POSCO홀딩스/현대제철"]]},
 ];
 
-let allData={}, curFilter='all';
+let allData={}, liveData={}, curFilter='all', curTab='close';
 
 function fmtC(c){if(c==null)return'N/A';const s=c>=0?'+':'';return s+c.toFixed(1)+'%';}
 function fmtV(v){if(!v)return'';if(v>=1e9)return(v/1e9).toFixed(1)+'B';if(v>=1e6)return(v/1e6).toFixed(1)+'M';if(v>=1e3)return(v/1e3).toFixed(0)+'K';return v;}
@@ -224,7 +256,8 @@ function intensityCls(c){
   if(c<=-5)return'd3'; if(c<=-2)return'd2'; if(c<=-0.5)return'd1';
   return'';
 }
-function sectorAvg(tickers){
+function sectorAvg(tickers,data){
+  data=data||allData;
   const vals=tickers.map(([s])=>allData[s]?.change).filter(v=>v!=null);
   return vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:null;
 }
@@ -235,9 +268,10 @@ function sectorDiffusion(tickers){
   return {up, total:vals.length};
 }
 
-function renderDashboard(){
+function renderDashboard(data, gridId, leadId){
+  data=data||allData; gridId=gridId||'top5Grid'; leadId=leadId||'leadersGrid';
   const medals=['🥇','🥈','🥉','4위','5위','6위','7위','8위'];
-  const avgs=SECTORS.map(s=>({n:s.n.replace(/^[A-Z]\. /,''),avg:sectorAvg(s.t),full:s.n}))
+  const avgs=SECTORS.map(s=>({n:s.n.replace(/^[A-Z]\. /,''),avg:sectorAvg(s.t,data),full:s.n}))
     .filter(x=>x.avg!=null).sort((a,b)=>b.avg-a.avg);
   const maxAvg=Math.max(...avgs.map(x=>Math.abs(x.avg)),1);
 
@@ -246,7 +280,7 @@ function renderDashboard(){
     if(!sec)return {trigger:'',stocks:''};
 
     // 전체 종목 등락률 기준 상위 3개 트리거
-    const allTk=sec.t.map(([sym,desc,kr])=>({sym,change:allData[sym]?.change,kr}))
+    const allTk=sec.t.map(([sym,desc,kr])=>({sym,change:data[sym]?.change,kr}))
       .filter(t=>t.change!=null).sort((a,b)=>b.change-a.change);
     const topTk=allTk.slice(0,3);
 
@@ -278,7 +312,7 @@ function renderDashboard(){
     };
   }
 
-  document.getElementById('top5Grid').innerHTML=avgs.slice(0,8).map((x,i)=>{
+  document.getElementById(gridId).innerHTML=avgs.slice(0,8).map((x,i)=>{
     const cc=x.avg>0?'up':'dn';
     const sign=x.avg>=0?'+':'';
     const w=Math.max(8,Math.min(100,Math.abs(x.avg)/maxAvg*100));
@@ -292,7 +326,7 @@ function renderDashboard(){
           </div>
           <div style="display:flex;align-items:center;gap:6px;">
             <span class="top5-val ${cc}">${sign}${x.avg.toFixed(1)}%</span>
-            <span style="font-size:11px;font-weight:700;color:#6e7d98;">${(()=>{const d=sectorDiffusion(SECTORS.find(s=>s.n===x.full).t);return d?d.up+'/'+d.total:'';})()}</span>
+            <span style="font-size:11px;font-weight:700;color:#6e7d98;">${(()=>{const d=sectorDiffusion(SECTORS.find(s=>s.n===x.full).t,data);return d?d.up+'/'+d.total:'';})()}</span>
           </div>
         </div>
         <div class="top5-bar-wrap"><div class="top5-bar" style="width:${w}%"></div></div>
@@ -306,13 +340,13 @@ function renderDashboard(){
 
   const allTickers=[];
   SECTORS.forEach(s=>s.t.forEach(([sym,desc,kr])=>{
-    const d=allData[sym];
+    const d=data[sym];
     if(d?.change!=null)allTickers.push({sym,kr,change:d.change,sec:s.n.replace(/^[A-Z]\. /,'')});
   }));
   const leaders=allTickers.sort((a,b)=>b.change-a.change).slice(0,10);
   const hero=leaders[0];
   const rest=leaders.slice(1,10);
-  document.getElementById('leadersGrid').innerHTML=hero?`
+  document.getElementById(leadId).innerHTML=hero?`
     <div class="leader-hero">
       <div class="leader-hero-label">오늘의 1등</div>
       <div class="leader-hero-sym">${hero.sym} <span style="font-size:15px;font-weight:700;color:#8fa0bd;">${hero.sec}</span></div>
@@ -334,8 +368,9 @@ function scrollToSector(name){
 }
 
 function renderMain(){
+  const data=curTab==='live'?liveData:allData;
   document.getElementById('main').innerHTML=SECTORS.map(s=>{
-    const avg=sectorAvg(s.t);
+    const avg=sectorAvg(s.t,data);
     if(curFilter==='up'&&(avg==null||avg<=0))return'';
     if(curFilter==='dn'&&(avg==null||avg>=0))return'';
     if(!['all','up','dn'].includes(curFilter)&&!s.grp.includes(curFilter))return'';
@@ -343,11 +378,13 @@ function renderMain(){
     const sign=avg!=null&&avg>=0?'+':'';
     const id='sc-'+s.n.replace(/[^a-zA-Z0-9]/g,'_');
     const rows=s.t.map(([sym,desc,kr])=>{
-      const d=allData[sym];
+      const d=data[sym];
       const c=d?.change, p=d?.price, v=d?.volume;
+      const lc=d?.live_change, lp=d?.live_price;
+      const hasLive = lc!=null && Math.abs(lc) >= 0.01;
       const pStr=p!=null?'$'+p.toFixed(p>100?0:2):'';
       return `<div class="tk ${intensityCls(c)}">
-        <div class="tk-top"><span class="tk-sym">${sym}</span><span class="tk-chg ${cls(c)}">${fmtC(c)}</span></div>
+        <div class="tk-top"><span class="tk-sym">${sym}</span><div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;"><span class="tk-chg ${cls(c)}">${fmtC(c)}</span>${hasLive?`<span style="font-size:11px;font-weight:900;font-family:ui-monospace,monospace;color:#9aa7c4;">현재 ${fmtC(lc)}</span>`:''}</div></div>
         <span class="tk-desc">${desc}</span>
         <span class="tk-kr">${kr}</span>
         <div class="tk-vol"><span>${pStr}</span><span>${fmtV(v)}</span></div>
@@ -358,6 +395,13 @@ function renderMain(){
       <div class="tk-grid">${rows}</div>
     </div>`;
   }).join('');
+}
+
+function setSubTab(tab,btn){
+  curTab=tab;
+  document.querySelectorAll('.sub-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  renderMain();
 }
 
 function setFilter(f,btn){
@@ -379,7 +423,7 @@ async function fetchAll(syms){
       if(r.ok){
         const d=await r.json();
         b.forEach(s=>{
-          if(d[s]&&d[s].price!=null)res[s]={price:d[s].price,change:d[s].change,volume:d[s].volume};
+          if(d[s]&&d[s].price!=null){res[s]={price:d[s].price,change:d[s].change,volume:d[s].volume,live_price:d[s].live_price,live_change:d[s].live_change};}
           else res[s]=null;
         });
       } else { b.forEach(s=>res[s]=null); }
@@ -396,11 +440,18 @@ async function loadData(){
   btn.classList.add('loading');
   try{
     const syms=[...new Set(SECTORS.flatMap(s=>s.t.map(t=>t[0])))];
-    allData=await fetchAll(syms);
+    const raw=await fetchAll(syms);
+    // allData = 종가 기준, liveData = 현재가 기준
+    Object.entries(raw).forEach(([s,d])=>{
+      if(!d)return;
+      allData[s]={price:d.price, change:d.change, volume:d.volume};
+      liveData[s]={price:d.live_price??d.price, change:d.live_change??0, volume:d.volume};
+    });
     const ok=Object.values(allData).filter(v=>v).length;
     document.getElementById('hdrSub').textContent=`32섹터 · ${ok}개 수집완료`;
     document.getElementById('footer').textContent=`업데이트: ${new Date().toLocaleString('ko-KR')} | ${ok}/${syms.length}개`;
-    renderDashboard();
+    renderDashboard(allData,'top5Grid','leadersGrid');
+    renderDashboard(liveData,'top5GridLive','leadersGridLive');
     renderMain();
   }catch(e){alert('오류: '+e.message);}
   finally{

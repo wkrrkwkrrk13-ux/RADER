@@ -24,18 +24,28 @@ class handler(BaseHTTPRequestHandler):
                     data = json.loads(resp.read().decode())
 
                 result = data['chart']['result'][0]
+                meta = result.get('meta', {})
                 closes = [v for v in result['indicators']['quote'][0]['close'] if v is not None]
                 volumes = [v for v in result['indicators']['quote'][0].get('volume', []) if v is not None]
 
                 if len(closes) >= 2:
                     prev = closes[-2]
-                    last = closes[-1]
+                    last = closes[-1]   # 정규장 종가 (고정)
                     vol = volumes[-1] if volumes else 0
                     change = ((last - prev) / prev) * 100
+
+                    # 현재가: 애프터/프리장 포함 실시간 가격
+                    live_price = meta.get('regularMarketPrice') or \
+                                 meta.get('postMarketPrice') or \
+                                 meta.get('preMarketPrice') or last
+                    live_change = ((live_price - last) / last) * 100
+
                     results[symbol] = {
-                        'price': round(last, 2),
-                        'change': round(change, 2),
+                        'price': round(last, 2),        # 종가
+                        'change': round(change, 2),     # 종가 기준 등락률
                         'volume': int(vol),
+                        'live_price': round(live_price, 2),   # 현재가
+                        'live_change': round(live_change, 2), # 현재가 기준 등락률 (종가 대비)
                     }
                 else:
                     results[symbol] = {'error': 'Not enough data'}

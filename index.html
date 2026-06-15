@@ -246,12 +246,14 @@ function intensityCls(c){
   if(c<=-5)return'd3'; if(c<=-2)return'd2'; if(c<=-0.5)return'd1';
   return'';
 }
-function sectorAvg(tickers){
-  const vals=tickers.map(([s])=>allData[s]?.change).filter(v=>v!=null);
+function sectorAvg(tickers,data){
+  data=data||allData;
+  const vals=tickers.map(([s])=>data[s]?.change).filter(v=>v!=null);
   return vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:null;
 }
-function sectorDiffusion(tickers){
-  const vals=tickers.map(([s])=>allData[s]?.change).filter(v=>v!=null);
+function sectorDiffusion(tickers,data){
+  data=data||allData;
+  const vals=tickers.map(([s])=>data[s]?.change).filter(v=>v!=null);
   if(!vals.length)return null;
   const up=vals.filter(v=>v>0).length;
   return {up, total:vals.length};

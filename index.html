@@ -301,7 +301,7 @@ function renderDashboard(data, gridId, leadId){
     };
   }
 
-  document.getElementById('top5Grid').innerHTML=avgs.slice(0,5).map((x,i)=>{
+  document.getElementById(gridId).innerHTML=avgs.slice(0,5).map((x,i)=>{
     const cc=x.avg>0?'up':'dn';
     const sign=x.avg>=0?'+':'';
     const w=Math.max(8,Math.min(100,Math.abs(x.avg)/maxAvg*100));
@@ -335,7 +335,7 @@ function renderDashboard(data, gridId, leadId){
   const leaders=allTickers.sort((a,b)=>b.change-a.change).slice(0,10);
   const hero=leaders[0];
   const rest=leaders.slice(1,10);
-  document.getElementById('leadersGrid').innerHTML=hero?`
+  document.getElementById(leadId).innerHTML=hero?`
     <div class="leader-hero">
       <div class="leader-hero-label">오늘의 1등</div>
       <div class="leader-hero-sym">${hero.sym} <span style="font-size:15px;font-weight:700;color:#8fa0bd;">${hero.sec}</span></div>

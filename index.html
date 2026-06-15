@@ -125,6 +125,16 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'Malgun Go
 @keyframes spin{to{transform:rotate(360deg);}}
 .spin-txt{font-size:12px;font-weight:800;color:var(--accent);}
 .footer{text-align:center;font-size:10px;color:var(--muted);padding:10px;border-top:1px solid var(--border);background:var(--surface);}
+.dual-col{display:grid;grid-template-columns:1fr 1px 1fr;gap:0;}
+.dual-panel{min-width:0;}
+.dual-divider{background:var(--border);margin:8px 0;}
+.dual-label{font-size:10px;font-weight:900;padding:6px 16px;letter-spacing:0.5px;}
+.close-label{color:#7c9cbf;background:rgba(43,149,255,0.06);border-bottom:1px solid rgba(43,149,255,0.15);}
+.live-label{color:#f7c84a;background:rgba(247,200,74,0.06);border-bottom:1px solid rgba(247,200,74,0.15);}
+.sub-tab-row{display:flex;gap:6px;padding:8px 10px;background:var(--surface);border-bottom:1px solid var(--border);}
+.sub-tab{padding:5px 14px;border-radius:8px;font-size:11px;font-weight:900;background:var(--surface2);border:1px solid var(--border);color:#9aa7c4;cursor:pointer;}
+.sub-tab.active{background:rgba(247,200,74,0.15);border-color:rgba(247,200,74,0.4);color:var(--accent);}
+@media(max-width:760px){.dual-col{grid-template-columns:1fr;}.dual-divider{height:1px;width:auto;margin:0;}}
 </style>
 </head>
 <body>
@@ -152,16 +162,38 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'Malgun Go
 </div>
 
 <div class="dashboard">
-  <div class="top-section">
-    <div class="top-title"><span>⚡ 자금흐름 + 🎯 국장타점</span><span style="color:var(--muted);font-weight:400;">Top 8</span></div>
-    <div class="top5-grid" id="top5Grid"></div>
-  </div>
-  <div class="top-section">
-    <div class="top-title"><span>🔥 오늘의 대장주 TOP10</span><span style="color:var(--muted);font-weight:400;">미장 개별 대장</span></div>
-    <div class="leaders-grid" id="leadersGrid"></div>
+  <div class="dual-col">
+    <div class="dual-panel">
+      <div class="dual-label close-label">📌 종가 기준</div>
+      <div class="top-section">
+        <div class="top-title"><span>⚡ 자금흐름 + 🎯 국장타점</span><span style="color:var(--muted);font-weight:400;">Top 5</span></div>
+        <div class="top5-grid" id="top5Grid"></div>
+      </div>
+      <div class="top-section">
+        <div class="top-title"><span>🔥 오늘의 대장주 TOP10</span><span style="color:var(--muted);font-weight:400;">미장 개별 대장</span></div>
+        <div class="leaders-grid" id="leadersGrid"></div>
+      </div>
+    </div>
+    <div class="dual-divider"></div>
+    <div class="dual-panel">
+      <div class="dual-label live-label">⚡ 현재가 기준</div>
+      <div class="top-section">
+        <div class="top-title"><span>⚡ 자금흐름 + 🎯 국장타점</span><span style="color:var(--muted);font-weight:400;">Top 5</span></div>
+        <div class="top5-grid" id="top5GridLive"></div>
+      </div>
+      <div class="top-section">
+        <div class="top-title"><span>🔥 오늘의 대장주 TOP10</span><span style="color:var(--muted);font-weight:400;">미장 개별 대장</span></div>
+        <div class="leaders-grid" id="leadersGridLive"></div>
+      </div>
+    </div>
   </div>
 </div>
 
+<div class="sub-tab-row">
+  <span style="font-size:10px;font-weight:700;color:var(--muted);padding:5px 4px;">섹터 기준:</span>
+  <div class="sub-tab active" onclick="setSubTab('close',this)">📌 종가</div>
+  <div class="sub-tab" onclick="setSubTab('live',this)">⚡ 현재가</div>
+</div>
 <div class="filter-row">
   <div class="ftab active" onclick="setFilter('all',this)">전체</div>
   <div class="ftab" onclick="setFilter('up',this)">상승↑</div>
@@ -203,7 +235,7 @@ const SECTORS=[
   {n:"귀금속",grp:['all'],t:[["NEM","금채굴 대장","고려아연"],["GOLD","금채굴","고려아연"]]},
 ];
 
-let allData={}, curFilter='all';
+let allData={}, liveData={}, curFilter='all', curTab='close';
 
 function fmtC(c){if(c==null)return'N/A';const s=c>=0?'+':'';return s+c.toFixed(1)+'%';}
 function fmtV(v){if(!v)return'';if(v>=1e9)return(v/1e9).toFixed(1)+'B';if(v>=1e6)return(v/1e6).toFixed(1)+'M';if(v>=1e3)return(v/1e3).toFixed(0)+'K';return v;}
@@ -225,7 +257,8 @@ function sectorDiffusion(tickers){
   return {up, total:vals.length};
 }
 
-function renderDashboard(){
+function renderDashboard(data, gridId, leadId){
+  data=data||allData; gridId=gridId||'top5Grid'; leadId=leadId||'leadersGrid';
   const medals=['🥇','🥈','🥉','4위','5위'];
   const avgs=SECTORS.map(s=>({n:s.n.replace(/^[A-Z]\. /,''),avg:sectorAvg(s.t),full:s.n}))
     .filter(x=>x.avg!=null).sort((a,b)=>b.avg-a.avg);
@@ -324,6 +357,7 @@ function scrollToSector(name){
 }
 
 function renderMain(){
+  const data=curTab==='live'?liveData:allData;
   document.getElementById('main').innerHTML=SECTORS.map(s=>{
     const avg=sectorAvg(s.t);
     if(curFilter==='up'&&(avg==null||avg<=0))return'';
@@ -348,6 +382,13 @@ function renderMain(){
       <div class="tk-grid">${rows}</div>
     </div>`;
   }).join('');
+}
+
+function setSubTab(tab,btn){
+  curTab=tab;
+  document.querySelectorAll('.sub-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  renderMain();
 }
 
 function setFilter(f,btn){
@@ -386,11 +427,18 @@ async function loadData(){
   btn.classList.add('loading');
   try{
     const syms=[...new Set(SECTORS.flatMap(s=>s.t.map(t=>t[0])))];
-    allData=await fetchAll(syms);
+    const raw=await fetchAll(syms);
+    // allData = 종가 기준, liveData = 현재가 기준
+    Object.entries(raw).forEach(([s,d])=>{
+      if(!d)return;
+      allData[s]={price:d.price, change:d.change, volume:d.volume};
+      liveData[s]={price:d.live_price??d.price, change:d.live_change??d.change, volume:d.volume};
+    });
     const ok=Object.values(allData).filter(v=>v).length;
     document.getElementById('hdrSub').textContent=`32섹터 · ${ok}개 수집완료`;
     document.getElementById('footer').textContent=`업데이트: ${new Date().toLocaleString('ko-KR')} | ${ok}/${syms.length}개`;
-    renderDashboard();
+    renderDashboard(allData,'top5Grid','leadersGrid');
+    renderDashboard(liveData,'top5GridLive','leadersGridLive');
     renderMain();
   }catch(e){alert('오류: '+e.message);}
   finally{

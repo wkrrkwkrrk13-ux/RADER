@@ -34,10 +34,10 @@ class handler(BaseHTTPRequestHandler):
                     vol = volumes[-1] if volumes else 0
                     change = ((last - prev) / prev) * 100
 
-                    # 현재가: 애프터/프리장 포함 실시간 가격
-                    live_price = meta.get('regularMarketPrice') or \
+                    # 현재가: 프리/애프터장 우선, 없으면 정규장 종가
+                    live_price = meta.get('preMarketPrice') or \
                                  meta.get('postMarketPrice') or \
-                                 meta.get('preMarketPrice') or last
+                                 meta.get('regularMarketPrice') or last
                     # 전일 종가 대비 현재가 등락률 (자금흐름/국장타점 계산용)
                     live_change = ((live_price - prev) / prev) * 100
 

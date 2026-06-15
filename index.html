@@ -331,7 +331,7 @@ function renderDashboard(data, gridId, leadId){
 
   const allTickers=[];
   SECTORS.forEach(s=>s.t.forEach(([sym,desc,kr])=>{
-    const d=allData[sym];
+    const d=data[sym];
     if(d?.change!=null)allTickers.push({sym,kr,change:d.change,sec:s.n.replace(/^[A-Z]\. /,'')});
   }));
   const leaders=allTickers.sort((a,b)=>b.change-a.change).slice(0,10);
@@ -361,7 +361,7 @@ function scrollToSector(name){
 function renderMain(){
   const data=curTab==='live'?liveData:allData;
   document.getElementById('main').innerHTML=SECTORS.map(s=>{
-    const avg=sectorAvg(s.t);
+    const avg=sectorAvg(s.t,data);
     if(curFilter==='up'&&(avg==null||avg<=0))return'';
     if(curFilter==='dn'&&(avg==null||avg>=0))return'';
     if(!['all','up','dn'].includes(curFilter)&&!s.grp.includes(curFilter))return'';
@@ -369,7 +369,7 @@ function renderMain(){
     const sign=avg!=null&&avg>=0?'+':'';
     const id='sc-'+s.n.replace(/[^a-zA-Z0-9]/g,'_');
     const rows=s.t.map(([sym,desc,kr])=>{
-      const d=allData[sym];
+      const d=data[sym];
       const c=d?.change, p=d?.price, v=d?.volume;
       const pStr=p!=null?'$'+p.toFixed(p>100?0:2):'';
       return `<div class="tk ${intensityCls(c)}">

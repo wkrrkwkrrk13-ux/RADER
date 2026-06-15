@@ -9,7 +9,7 @@ def is_us_market_open():
     if now_utc.weekday() >= 5:  # 토/일
         return False
     t = now_utc.hour * 60 + now_utc.minute
-    return 14 * 60 + 30 <= t < 21 * 60
+    return 13 * 60 + 30 <= t < 20 * 60
 
 class handler(BaseHTTPRequestHandler):
     def do_GET(self):

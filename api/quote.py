@@ -85,6 +85,16 @@ class handler(BaseHTTPRequestHandler):
             except Exception as e:
                 results[symbol] = {'error': str(e)}
 
+        # 디버그 정보 추가
+        from datetime import datetime, timezone
+        now_utc = datetime.now(timezone.utc)
+        results['__debug__'] = {
+            'utc_time': now_utc.strftime('%Y-%m-%d %H:%M:%S'),
+            'utc_hour': now_utc.hour,
+            'utc_minute': now_utc.minute,
+            'weekday': now_utc.weekday(),
+            'market_open': market_open,
+        }
         payload = json.dumps(results).encode()
         self.send_response(200)
         self.send_header('Content-Type', 'application/json')

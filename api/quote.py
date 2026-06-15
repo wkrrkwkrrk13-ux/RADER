@@ -1,17 +1,15 @@
 from http.server import BaseHTTPRequestHandler
 import urllib.request
 import json
-from datetime import datetime
-import pytz
+from datetime import datetime, timezone, timedelta
 
-def is_market_open():
-    """미국 정규장 중인지 확인 (ET 기준 09:30~16:00, 월~금)"""
-    et = pytz.timezone('America/New_York')
-    now = datetime.now(et)
-    if now.weekday() >= 5:  # 토/일
+def is_us_market_open():
+    """미국 정규장 중인지 확인 (UTC 기준 14:30~21:00, 월~금)"""
+    now_utc = datetime.now(timezone.utc)
+    if now_utc.weekday() >= 5:  # 토/일
         return False
-    t = now.hour * 60 + now.minute
-    return 9 * 60 + 30 <= t < 16 * 60
+    t = now_utc.hour * 60 + now_utc.minute
+    return 14 * 60 + 30 <= t < 21 * 60
 
 class handler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -22,13 +20,13 @@ class handler(BaseHTTPRequestHandler):
         symbols_raw = params.get('symbols', params.get('symbol', ['SPY']))[0]
         symbols = [s.strip().upper() for s in symbols_raw.split(',')][:20]
 
-        market_open = is_market_open()
+        market_open = is_us_market_open()
 
         results = {}
         for symbol in symbols:
             try:
-                # 1) 일봉 데이터 (5일치)
-                url_daily = f'https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?interval=1d&range=5d'
+                # 1) 일봉 데이터 (7일치 - 넉넉하게)
+                url_daily = f'https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?interval=1d&range=7d'
                 req = urllib.request.Request(url_daily, headers={
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
                     'Accept': 'application/json',
@@ -44,12 +42,12 @@ class handler(BaseHTTPRequestHandler):
                     results[symbol] = {'error': 'Not enough data'}
                     continue
 
-                if market_open:
-                    # 정규장 중: closes[-1]은 오늘 장중가(미확정) → 전전일 대비 전일 종가
-                    prev = closes[-3] if len(closes) >= 3 else closes[-2]
-                    last = closes[-2]  # 전일 확정 종가
+                if market_open and len(closes) >= 3:
+                    # 정규장 중: 오늘 장중가는 미확정 → 전일 종가 기준
+                    prev = closes[-3]
+                    last = closes[-2]
                 else:
-                    # 장외: closes[-1]이 가장 최근 확정 종가
+                    # 장외: 가장 최근 확정 종가
                     prev = closes[-2]
                     last = closes[-1]
 

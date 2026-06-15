@@ -42,14 +42,13 @@ class handler(BaseHTTPRequestHandler):
                     results[symbol] = {'error': 'Not enough data'}
                     continue
 
-                if market_open and len(closes) >= 4:
-                    # 정규장 중: 야후가 오늘 데이터를 2개 넣음(시가+현재가)
-                    # closes[-1] = 현재 실시간가
-                    # closes[-2] = 오늘 시가 근처 (미확정)
-                    # closes[-3] = 금요일(전일) 확정 종가
-                    # closes[-4] = 목요일(전전일) 확정 종가
-                    prev_for_change = closes[-4]
-                    last = closes[-3]
+                if market_open and len(closes) >= 3:
+                    # 정규장 중:
+                    # closes[-1] = 오늘 장중 실시간가 (미확정)
+                    # closes[-2] = 전일(금요일) 확정 종가 ← price
+                    # closes[-3] = 전전일(목요일) 확정 종가 ← change 기준
+                    prev_for_change = closes[-3]
+                    last = closes[-2]
                 else:
                     # 장외: closes[-1]이 가장 최근 확정 종가
                     prev_for_change = closes[-2]

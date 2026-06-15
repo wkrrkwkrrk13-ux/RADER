@@ -4,7 +4,7 @@ import json
 from datetime import datetime, timezone, timedelta
 
 def is_us_market_open():
-    """미국 정규장 중인지 확인 (UTC 기준 14:30~21:00, 월~금)"""
+    """미국 정규장 중인지 확인 (UTC 기준 13:30~20:00, 월~금 / 섬머타임 기준)"""
     now_utc = datetime.now(timezone.utc)
     if now_utc.weekday() >= 5:  # 토/일
         return False
@@ -43,16 +43,16 @@ class handler(BaseHTTPRequestHandler):
                     continue
 
                 if market_open and len(closes) >= 3:
-                    # 정규장 중: 오늘 장중가는 미확정 → 전일 종가 기준
-                    prev = closes[-3]
-                    last = closes[-2]
+                    # 정규장 중: closes[-1]은 오늘 장중가(미확정)
+                    prev_for_change = closes[-3]   # 전전일 종가
+                    last = closes[-2]              # 전일 확정 종가
                 else:
-                    # 장외: 가장 최근 확정 종가
-                    prev = closes[-2]
+                    # 장외: closes[-1]이 가장 최근 확정 종가
+                    prev_for_change = closes[-2]
                     last = closes[-1]
 
                 vol = volumes[-1] if volumes else 0
-                change = ((last - prev) / prev) * 100
+                change = ((last - prev_for_change) / prev_for_change) * 100
 
                 # 2) 현재가 (1분봉, 프리/애프터 포함)
                 url_live = f'https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?interval=1m&range=1d&includePrePost=true'
@@ -71,7 +71,8 @@ class handler(BaseHTTPRequestHandler):
                 except Exception:
                     pass
 
-                live_change = ((live_price - prev) / prev) * 100
+                # live_change = 전일 확정 종가(last) 대비 현재가 등락률
+                live_change = ((live_price - last) / last) * 100
 
                 results[symbol] = {
                     'price': round(last, 2),

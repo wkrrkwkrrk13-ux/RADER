@@ -74,13 +74,18 @@ class handler(BaseHTTPRequestHandler):
                 # live_change = 전일 확정 종가(last) 대비 현재가 등락률
                 live_change = ((live_price - last) / last) * 100
 
-                results[symbol] = {
+                res_data = {
                     'price': round(last, 2),
                     'change': round(change, 2),
                     'volume': int(vol),
                     'live_price': round(live_price, 2),
                     'live_change': round(live_change, 2),
                 }
+                if symbol == 'AMAT':
+                    res_data['_closes'] = [round(c,2) for c in closes]
+                    res_data['_market_open'] = market_open
+                    res_data['_last_idx'] = -2 if market_open else -1
+                results[symbol] = res_data
 
             except Exception as e:
                 results[symbol] = {'error': str(e)}
@@ -94,6 +99,7 @@ class handler(BaseHTTPRequestHandler):
             'utc_minute': now_utc.minute,
             'weekday': now_utc.weekday(),
             'market_open': market_open,
+            'closes_sample': closes if 'closes' in dir() else 'N/A',
         }
         payload = json.dumps(results).encode()
         self.send_response(200)

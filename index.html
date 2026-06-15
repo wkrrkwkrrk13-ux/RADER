@@ -262,7 +262,7 @@ function sectorDiffusion(tickers,data){
 function renderDashboard(data, gridId, leadId){
   data=data||allData; gridId=gridId||'top5Grid'; leadId=leadId||'leadersGrid';
   const medals=['🥇','🥈','🥉','4위','5위'];
-  const avgs=SECTORS.map(s=>({n:s.n.replace(/^[A-Z]\. /,''),avg:sectorAvg(s.t),full:s.n}))
+  const avgs=SECTORS.map(s=>({n:s.n.replace(/^[A-Z]\. /,''),avg:sectorAvg(s.t,data),full:s.n}))
     .filter(x=>x.avg!=null).sort((a,b)=>b.avg-a.avg);
   const maxAvg=Math.max(...avgs.map(x=>Math.abs(x.avg)),1);
 
@@ -271,7 +271,7 @@ function renderDashboard(data, gridId, leadId){
     if(!sec)return {trigger:'',stocks:''};
 
     // 전체 종목 등락률 기준 상위 3개 트리거
-    const allTk=sec.t.map(([sym,desc,kr])=>({sym,change:allData[sym]?.change,kr}))
+    const allTk=sec.t.map(([sym,desc,kr])=>({sym,change:data[sym]?.change,kr}))
       .filter(t=>t.change!=null).sort((a,b)=>b.change-a.change);
     const topTk=allTk.slice(0,3);
 
@@ -317,7 +317,7 @@ function renderDashboard(data, gridId, leadId){
           </div>
           <div style="display:flex;align-items:center;gap:6px;">
             <span class="top5-val ${cc}">${sign}${x.avg.toFixed(1)}%</span>
-            <span style="font-size:11px;font-weight:700;color:#6e7d98;">${(()=>{const d=sectorDiffusion(SECTORS.find(s=>s.n===x.full).t);return d?d.up+'/'+d.total:'';})()}</span>
+            <span style="font-size:11px;font-weight:700;color:#6e7d98;">${(()=>{const d=sectorDiffusion(SECTORS.find(s=>s.n===x.full).t,data);return d?d.up+'/'+d.total:'';})()}</span>
           </div>
         </div>
         <div class="top5-bar-wrap"><div class="top5-bar" style="width:${w}%"></div></div>
@@ -412,7 +412,7 @@ async function fetchAll(syms){
       if(r.ok){
         const d=await r.json();
         b.forEach(s=>{
-          if(d[s]&&d[s].price!=null)res[s]={price:d[s].price,change:d[s].change,volume:d[s].volume};
+          if(d[s]&&d[s].price!=null)res[s]={price:d[s].price,change:d[s].change,volume:d[s].volume,live_price:d[s].live_price,live_change:d[s].live_change};
           else res[s]=null;
         });
       } else { b.forEach(s=>res[s]=null); }

@@ -15,8 +15,9 @@ class handler(BaseHTTPRequestHandler):
         results = {}
         for symbol in symbols:
             try:
-                url = f'https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?interval=1d&range=5d&includePrePost=true'
-                req = urllib.request.Request(url, headers={
+                # 1) 종가 데이터 (5일치 일봉)
+                url_daily = f'https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?interval=1d&range=5d'
+                req = urllib.request.Request(url_daily, headers={
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
                     'Accept': 'application/json',
                 })
@@ -24,32 +25,46 @@ class handler(BaseHTTPRequestHandler):
                     data = json.loads(resp.read().decode())
 
                 result = data['chart']['result'][0]
-                meta = result.get('meta', {})
                 closes = [v for v in result['indicators']['quote'][0]['close'] if v is not None]
                 volumes = [v for v in result['indicators']['quote'][0].get('volume', []) if v is not None]
 
-                if len(closes) >= 2:
-                    prev = closes[-2]
-                    last = closes[-1]   # 정규장 종가 (고정)
-                    vol = volumes[-1] if volumes else 0
-                    change = ((last - prev) / prev) * 100
-
-                    # 현재가: 프리/애프터장 우선, 없으면 정규장 종가
-                    live_price = meta.get('preMarketPrice') or \
-                                 meta.get('postMarketPrice') or \
-                                 meta.get('regularMarketPrice') or last
-                    # 전일 종가 대비 현재가 등락률 (자금흐름/국장타점 계산용)
-                    live_change = ((live_price - prev) / prev) * 100
-
-                    results[symbol] = {
-                        'price': round(last, 2),        # 종가
-                        'change': round(change, 2),     # 전일 종가 대비 오늘 종가 등락률
-                        'volume': int(vol),
-                        'live_price': round(live_price, 2),   # 현재가
-                        'live_change': round(live_change, 2), # 전일 종가 대비 현재가 등락률
-                    }
-                else:
+                if len(closes) < 2:
                     results[symbol] = {'error': 'Not enough data'}
+                    continue
+
+                prev = closes[-2]
+                last = closes[-1]   # 정규장 종가 (고정)
+                vol = volumes[-1] if volumes else 0
+                change = ((last - prev) / prev) * 100
+
+                # 2) 현재가 데이터 (1분봉, 프리/애프터 포함)
+                url_live = f'https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?interval=1m&range=1d&includePrePost=true'
+                req2 = urllib.request.Request(url_live, headers={
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                    'Accept': 'application/json',
+                })
+                live_price = last  # 기본값: 종가
+                try:
+                    with urllib.request.urlopen(req2, timeout=8) as resp2:
+                        data2 = json.loads(resp2.read().decode())
+                    result2 = data2['chart']['result'][0]
+                    closes2 = [v for v in result2['indicators']['quote'][0]['close'] if v is not None]
+                    if closes2:
+                        live_price = closes2[-1]  # 가장 최근 1분봉 종가
+                except Exception:
+                    pass  # 실패 시 종가 사용
+
+                # 전일 종가 대비 현재가 등락률
+                live_change = ((live_price - prev) / prev) * 100
+
+                results[symbol] = {
+                    'price': round(last, 2),              # 정규장 종가
+                    'change': round(change, 2),            # 전일 종가 대비 등락률
+                    'volume': int(vol),
+                    'live_price': round(live_price, 2),    # 현재가 (프리/애프터 포함)
+                    'live_change': round(live_change, 2),  # 전일 종가 대비 현재가 등락률
+                }
+
             except Exception as e:
                 results[symbol] = {'error': str(e)}
 

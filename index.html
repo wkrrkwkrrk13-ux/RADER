@@ -258,11 +258,12 @@ function intensityCls(c){
 }
 function sectorAvg(tickers,data){
   data=data||allData;
-  const vals=tickers.map(([s])=>allData[s]?.change).filter(v=>v!=null);
+  const vals=tickers.map(([s])=>data[s]?.change).filter(v=>v!=null);
   return vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:null;
 }
-function sectorDiffusion(tickers){
-  const vals=tickers.map(([s])=>allData[s]?.change).filter(v=>v!=null);
+function sectorDiffusion(tickers,data){
+  data=data||allData;
+  const vals=tickers.map(([s])=>data[s]?.change).filter(v=>v!=null);
   if(!vals.length)return null;
   const up=vals.filter(v=>v>0).length;
   return {up, total:vals.length};
@@ -445,7 +446,7 @@ async function loadData(){
     Object.entries(raw).forEach(([s,d])=>{
       if(!d)return;
       allData[s]={price:d.price, change:d.change, volume:d.volume};
-      liveData[s]={price:d.live_price??d.price, change:d.live_change??0, volume:d.volume};
+      liveData[s]={price:d.live_price??d.price, change:d.live_change??d.change, volume:d.volume};
     });
     const ok=Object.values(allData).filter(v=>v).length;
     document.getElementById('hdrSub').textContent=`32섹터 · ${ok}개 수집완료`;

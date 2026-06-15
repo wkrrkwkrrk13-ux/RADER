@@ -38,14 +38,15 @@ class handler(BaseHTTPRequestHandler):
                     live_price = meta.get('regularMarketPrice') or \
                                  meta.get('postMarketPrice') or \
                                  meta.get('preMarketPrice') or last
-                    live_change = ((live_price - last) / last) * 100
+                    # 전일 종가 대비 현재가 등락률 (자금흐름/국장타점 계산용)
+                    live_change = ((live_price - prev) / prev) * 100
 
                     results[symbol] = {
                         'price': round(last, 2),        # 종가
-                        'change': round(change, 2),     # 종가 기준 등락률
+                        'change': round(change, 2),     # 전일 종가 대비 오늘 종가 등락률
                         'volume': int(vol),
                         'live_price': round(live_price, 2),   # 현재가
-                        'live_change': round(live_change, 2), # 현재가 기준 등락률 (종가 대비)
+                        'live_change': round(live_change, 2), # 전일 종가 대비 현재가 등락률
                     }
                 else:
                     results[symbol] = {'error': 'Not enough data'}

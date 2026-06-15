@@ -77,33 +77,17 @@ class handler(BaseHTTPRequestHandler):
                 # live_change = 전일 확정 종가(last) 대비 현재가 등락률
                 live_change = ((live_price - last) / last) * 100
 
-                res_data = {
+                results[symbol] = {
                     'price': round(last, 2),
                     'change': round(change, 2),
                     'volume': int(vol),
                     'live_price': round(live_price, 2),
                     'live_change': round(live_change, 2),
                 }
-                if symbol == 'AMAT':
-                    res_data['_closes'] = [round(c,2) for c in closes]
-                    res_data['_market_open'] = market_open
-                    res_data['_last_idx'] = -2 if market_open else -1
-                results[symbol] = res_data
 
             except Exception as e:
                 results[symbol] = {'error': str(e)}
 
-        # 디버그 정보 추가
-        from datetime import datetime, timezone
-        now_utc = datetime.now(timezone.utc)
-        results['__debug__'] = {
-            'utc_time': now_utc.strftime('%Y-%m-%d %H:%M:%S'),
-            'utc_hour': now_utc.hour,
-            'utc_minute': now_utc.minute,
-            'weekday': now_utc.weekday(),
-            'market_open': market_open,
-            'closes_sample': closes if 'closes' in dir() else 'N/A',
-        }
         payload = json.dumps(results).encode()
         self.send_response(200)
         self.send_header('Content-Type', 'application/json')

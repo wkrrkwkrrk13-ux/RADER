@@ -125,16 +125,6 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'Malgun Go
 @keyframes spin{to{transform:rotate(360deg);}}
 .spin-txt{font-size:12px;font-weight:800;color:var(--accent);}
 .footer{text-align:center;font-size:10px;color:var(--muted);padding:10px;border-top:1px solid var(--border);background:var(--surface);}
-.dual-col{display:grid;grid-template-columns:1fr 1px 1fr;gap:0;}
-.dual-panel{min-width:0;}
-.dual-divider{background:var(--border);margin:8px 0;}
-.dual-label{font-size:10px;font-weight:900;padding:6px 16px;letter-spacing:0.5px;}
-.close-label{color:#7c9cbf;background:rgba(43,149,255,0.06);border-bottom:1px solid rgba(43,149,255,0.15);}
-.live-label{color:#f7c84a;background:rgba(247,200,74,0.06);border-bottom:1px solid rgba(247,200,74,0.15);}
-.sub-tab-row{display:flex;gap:6px;padding:8px 10px;background:var(--surface);border-bottom:1px solid var(--border);}
-.sub-tab{padding:5px 14px;border-radius:8px;font-size:11px;font-weight:900;background:var(--surface2);border:1px solid var(--border);color:#9aa7c4;cursor:pointer;}
-.sub-tab.active{background:rgba(247,200,74,0.15);border-color:rgba(247,200,74,0.4);color:var(--accent);}
-@media(max-width:760px){.dual-col{grid-template-columns:1fr;}.dual-divider{height:1px;width:auto;margin:0;}}
 </style>
 </head>
 <body>
@@ -162,46 +152,18 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'Malgun Go
 </div>
 
 <div class="dashboard">
-  <div class="dual-col">
-    <div class="dual-panel">
-      <div class="dual-label close-label">📌 종가 기준</div>
-      <div class="top-section">
-        <div class="top-title"><span>⚡ 자금흐름 + 🎯 국장타점</span><span style="color:var(--muted);font-weight:400;">Top 8</span></div>
-        <div class="top5-grid" id="top5Grid"></div>
-      </div>
-      <div class="top-section">
-        <div class="top-title"><span>🔥 오늘의 대장주 TOP10</span><span style="color:var(--muted);font-weight:400;">미장 개별 대장</span></div>
-        <div class="leaders-grid" id="leadersGrid"></div>
-      </div>
-    </div>
-    <div class="dual-divider"></div>
-    <div class="dual-panel">
-      <div class="dual-label live-label">⚡ 현재가 기준</div>
-      <div class="top-section">
-        <div class="top-title"><span>⚡ 자금흐름 + 🎯 국장타점</span><span style="color:var(--muted);font-weight:400;">Top 8</span></div>
-        <div class="top5-grid" id="top5GridLive"></div>
-      </div>
-      <div class="top-section">
-        <div class="top-title"><span>🔥 오늘의 대장주 TOP10</span><span style="color:var(--muted);font-weight:400;">미장 개별 대장</span></div>
-        <div class="leaders-grid" id="leadersGridLive"></div>
-      </div>
-    </div>
+  <div class="top-section">
+    <div class="top-title"><span>⚡ 자금흐름 + 🎯 국장타점</span><span style="color:var(--muted);font-weight:400;">Top 8</span></div>
+    <div class="top5-grid" id="top5Grid"></div>
+  </div>
+  <div class="top-section">
+    <div class="top-title"><span>🔥 오늘의 대장주 TOP10</span><span style="color:var(--muted);font-weight:400;">미장 개별 대장</span></div>
+    <div class="leaders-grid" id="leadersGrid"></div>
   </div>
 </div>
 
-<div class="sub-tab-row">
-  <span style="font-size:10px;font-weight:700;color:var(--muted);padding:5px 4px;">섹터 기준:</span>
-  <div class="sub-tab active" onclick="setSubTab('close',this)">📌 종가</div>
-  <div class="sub-tab" onclick="setSubTab('live',this)">⚡ 현재가</div>
-</div>
 <div class="filter-row">
   <div class="ftab active" onclick="setFilter('all',this)">전체</div>
-  <div class="ftab" onclick="setFilter('kr',this)">국장영향</div>
-  <div class="ftab" onclick="setFilter('semi',this)">반도체 소부장</div>
-  <div class="ftab" onclick="setFilter('ai',this)">AI / 클라우드</div>
-  <div class="ftab" onclick="setFilter('energy',this)">전력 / 원전</div>
-  <div class="ftab" onclick="setFilter('defense',this)">방산 / 우주항공</div>
-  <div class="ftab" onclick="setFilter('bio',this)">바이오 헬스케어</div>
   <div class="ftab" onclick="setFilter('up',this)">상승↑</div>
   <div class="ftab" onclick="setFilter('dn',this)">하락↓</div>
 </div>
@@ -211,41 +173,37 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'Malgun Go
 
 <script>
 const SECTORS=[
-  {n:"A. ETF Overview",grp:['all','kr'],t:[["SPY","S&P500 ETF","미장흐름만"],["QQQ","나스닥100 ETF","미장흐름만"],["SOXX","반도체 ETF","삼성전자/SK하이닉스"],["XLF","금융 ETF","KB금융/신한지주"],["XLE","에너지 ETF","S-Oil/SK이노베이션"],["XLU","유틸리티 ETF","한국전력/효성중공업"],["XLV","헬스케어 ETF","삼성바이오로직스/셀트리온"],["XLI","산업재 ETF","두산밥캣/HD현대"],["ITA","방산 ETF","한화에어로스페이스/LIG넥스원"],["XBI","바이오테크 ETF","HLB/에이비엘바이오"],["XLC","통신 ETF","NAVER/카카오"],["HACK","사이버보안 ETF","안랩/샌즈랩"],["LIT","리튬배터리 ETF","에코프로/LG에너지솔루션"],["DRIV","자율주행 ETF","현대차/기아"],["IHI","의료기기 ETF","큐렉소/덴티움"],["TLT","장기국채 ETF","미장흐름만"]]},
-  {n:"B. 반도체설계",grp:['all','kr','semi'],t:[["NVDA","AI GPU 대장","삼성전자/SK하이닉스/이수페타시스"],["AMD","CPU/GPU","삼성전자/SK하이닉스/가온칩스"],["AVGO","네트워킹칩","이수페타시스/가온칩스"],["MRVL","데이터센터칩","이수페타시스/에이직랜드"],["QCOM","모바일AP","제주반도체/텔레칩스"],["ARM","칩설계 라이선스","가온칩스/에이직랜드/오픈엣지"],["CDNS","반도체설계툴","가온칩스/오픈엣지/퀄리타스"],["SNPS","반도체설계툴","가온칩스/오픈엣지/에이디테크놀로지"]]},
-  {n:"B. 반도체장비",grp:['all','kr','semi'],t:[["AMAT","식각/증착 대장","한미반도체/원익IPS/피에스케이"],["LRCX","식각장비 대장","한미반도체/원익IPS/주성엔지니어링"],["ASML","노광장비 독점","원익IPS/넥스틴/오로스테크놀로지"],["KLAC","계측/검사장비","넥스틴/오로스테크놀로지/티에스이"],["ONTO","광학계측장비","넥스틴/오로스테크놀로지"],["FORM","열처리장비","주성엔지니어링/피에스케이"],["TER","반도체테스트장비 대장","ISC/티에스이/하나마이크론"],["KEYS","테스트계측장비","ISC/티에스이/와이씨"]]},
-  {n:"B. 반도체소재",grp:['all','kr','semi'],t:[["ENTG","고순도소재 대장","솔브레인/동진쎄미켐/한솔케미칼"],["MKSI","공정가스/소재","후성/원익머트리얼즈"],["EMN","특수화학","덕산테코피아/이엔에프테크놀로지"],["CMC","CMP슬러리","솔브레인/동진쎄미켐"],["IOSP","특수윤활/화학","켐트로닉스/와이씨켐"],["UCTT","초고순도부품","원익머트리얼즈/레이크머티리얼즈"],["LIN","산업가스","후성/원익머트리얼즈"],["DD","특수소재","덕산테코피아/이엔에프테크놀로지"]]},
-  {n:"B. 메모리/비메모리",grp:['all','kr','semi'],t:[["MU","DRAM/HBM 대장","삼성전자/SK하이닉스"],["SNDK","낸드플래시","삼성전자/SK하이닉스"],["ON","전력반도체","DB하이텍/LX세미콘"],["NXPI","차량용반도체","텔레칩스/LX세미콘"],["TXN","아날로그반도체","DB하이텍/어보브반도체"],["ADI","아날로그/혼성신호","DB하이텍/어보브반도체"],["MPWR","전력관리IC","LX세미콘/DB하이텍"],["INTC","CPU/파운드리","삼성전자/DB하이텍"]]},
-  {n:"C. AI인프라/데센",grp:['all','kr','ai'],t:[["SMCI","AI서버 대장","이수페타시스/대덕전자/심텍"],["DELL","서버/인프라","이수페타시스/코리아써키트"],["HPE","엔터프라이즈서버","심텍/코리아써키트"],["VRT","데이터센터냉각","HD현대일렉트릭/효성중공업/GST"],["ANET","데센네트워크","이수페타시스/대덕전자"],["CRDO","고속인터커넥트","이수페타시스/심텍"],["EQIX","데이터센터리츠","미장흐름만"],["CSCO","네트워크장비","미장흐름만"]]},
-  {n:"C. 광통신/네트워크",grp:['all','kr','ai'],t:[["CIEN","광통신장비 대장","오이솔루션/대한광통신/빛과전자"],["LITE","광부품","오이솔루션/대한광통신"],["COHR","레이저/광학","빛과전자/오이솔루션"],["AAOI","광트랜시버","오이솔루션/빛과전자"],["VIAV","광테스트장비","미장흐름만"],["IPGP","산업용레이저","미장흐름만"],["FN","광섬유커넥터","대한광통신/쏠리드"],["FFIV","앱네트워크","미장흐름만"]]},
-  {n:"C. 클라우드/SaaS",grp:['all','kr','ai'],t:[["MSFT","클라우드/SaaS 대장","LG CNS/현대오토에버/더존비즈온"],["GOOGL","클라우드/AI","LG CNS/현대오토에버/더존비즈온"],["ORCL","엔터프라이즈DB","더존비즈온/영림원소프트랩"],["CRM","CRM SaaS","LG CNS/현대오토에버/더존비즈온"],["NOW","IT워크플로우SaaS","LG CNS/현대오토에버"],["ADBE","크리에이티브SaaS","폴라리스오피스/한글과컴퓨터"],["SNOW","데이터클라우드","더존비즈온/코난테크놀로지"],["PLTR","AI/국방 플랫폼","한글과컴퓨터/솔트룩스/한싹"]]},
-  {n:"C. 사이버보안",grp:['all','kr','ai'],t:[["CRWD","EDR/엔드포인트 대장","안랩/샌즈랩"],["PANW","통합보안플랫폼","안랩/지니언스"],["S","차세대EDR","샌즈랩/안랩"],["SAIL","클라우드보안","한싹/드림시큐리티"],["FTNT","네트워크보안","지니언스/모니터랩"],["ZS","제로트러스트","라온시큐어/지니언스"],["NET","CDN/엣지보안","미장흐름만"],["OKTA","ID관리/인증","라온시큐어/드림시큐리티"]]},
-  {n:"D. 빅테크플랫폼",grp:['all'],t:[["AAPL","애플 생태계","LG이노텍/비에이치/덕우전자"],["AMZN","이커머스/AWS","CJ대한통운/LG CNS/현대오토에버"],["META","SNS/광고","NAVER/카카오/와이즈버즈"],["NFLX","OTT 대장","스튜디오드래곤/CJ ENM/에이스토리"],["UBER","모빌리티플랫폼","카카오"],["MELI","중남미이커머스","미장흐름만"],["SHOP","이커머스플랫폼","카페24"],["SNAP","SNS/광고","미장흐름만"]]},
-  {n:"D. 중국플랫폼",grp:['all','kr'],t:[["BABA","중국이커머스 대장","아모레퍼시픽/LG생활건강/코스맥스"],["PDD","핀둬둬","아모레퍼시픽/LG생활건강/F&F"],["JD","징동닷컴","아모레퍼시픽/LG생활건강/호텔신라"],["BIDU","바이두","NAVER/카카오/솔트룩스"],["TME","텐센트뮤직","하이브/JYP/SM"],["VIPS","웨이핀후이","아모레퍼시픽/LG생활건강/실리콘투"],["TCOM","트립닷컴","파라다이스/GKL/롯데관광개발"],["YMM","화물플랫폼","미장흐름만"]]},
-  {n:"D. 핀테크/크립토",grp:['all','kr'],t:[["V","글로벌결제 대장","NHN KCP/KG이니시스/카카오페이"],["MA","글로벌결제","NHN KCP/KG이니시스/카카오페이"],["PYPL","온라인결제","카카오페이/NHN KCP"],["HOOD","리테일투자","키움증권/미래에셋증권/NH투자증권"],["XYZ","블록/크립토핀테크","우리기술투자/한화투자증권/갤럭시아머니트리"],["SOFI","디지털은행","미장흐름만"],["COIN","크립토거래소 대장","우리기술투자/한화투자증권/갤럭시아머니트리"],["IBIT","비트코인ETF","우리기술투자/한화투자증권/갤럭시아머니트리"]]},
-  {n:"E. 대형금융/은행",grp:['all'],t:[["JPM","미국최대은행","KB금융/신한지주/하나금융지주"],["GS","투자은행 대장","미래에셋증권/NH투자증권/한국금융지주"],["MS","투자은행","미래에셋증권/한국금융지주/삼성증권"],["BAC","상업은행","KB금융/신한지주/하나금융지주"],["C","글로벌은행","KB금융/신한지주/우리금융지주"],["WFC","리테일은행","KB금융/신한지주/우리금융지주"],["BX","사모펀드/대체투자","미장흐름만"],["AXP","프리미엄카드","삼성카드"]]},
-  {n:"E. 보험/자산운용",grp:['all'],t:[["BLK","자산운용 대장","미래에셋증권/한국금융지주"],["SCHW","리테일브로커리지","키움증권/미래에셋증권/한국금융지주"],["MET","생명보험","삼성생명/한화생명/동양생명"],["PRU","보험/자산운용","삼성생명/한화생명/미래에셋증권"],["AFL","보험","삼성생명/한화생명"],["CB","손해보험","삼성화재/DB손해보험/현대해상"],["AIG","종합보험","삼성화재/DB손해보험/현대해상"],["PGR","자동차보험","DB손해보험/현대해상/삼성화재"]]},
-  {n:"F. 정유/전통에너지",grp:['all','energy'],t:[["XOM","미국최대정유","S-Oil/SK이노베이션"],["CVX","쉐브론","S-Oil/SK이노베이션"],["COP","E&P 탐사생산","SK이노베이션/S-Oil"],["OXY","셰일오일","S-Oil"],["PSX","정제/화학","LG화학/롯데케미칼"],["MPC","정제","S-Oil/SK이노베이션"],["SLB","유전서비스 대장","미장흐름만"],["HAL","유전서비스","미장흐름만"]]},
-  {n:"F. 전력인프라",grp:['all','kr','energy'],t:[["ETN","변압기/전력관리 대장","효성중공업/HD현대일렉트릭/LS ELECTRIC"],["NEE","재생에너지+유틸리티","한국전력/효성중공업/LS ELECTRIC"],["AES","발전사업자","한국전력"],["EXC","미국 전력공기업","한국전력"],["PCG","전력공기업","한국전력"],["AEP","전력공기업","한국전력"],["DUK","전력공기업","한국전력"],["VST","전력판매/유틸리티","한국전력/효성중공업"]]},
-  {n:"F. 원전",grp:['all','kr','energy'],t:[["CCJ","우라늄채굴 대장","두산에너빌리티/한전기술/우진"],["LEU","우라늄농축","두산에너빌리티/한전기술"],["NNE","SMR 개발","두산에너빌리티/우진/비에이치아이"],["SMR","SMR 대장","두산에너빌리티/우진/비에이치아이"],["OKLO","마이크로원전","두산에너빌리티/우진/비에이치아이"],["CEG","원전운영 대장","두산에너빌리티/한전기술/우리기술"],["BWXT","원전부품/방산","두산에너빌리티/한전기술/우리기술"],["TLN","원전운영+AI전력","두산에너빌리티/한전기술/우리기술"]]},
-  {n:"F. 신재생에너지",grp:['all','energy'],t:[["ENPH","태양광 인버터","한화솔루션/HD현대에너지솔루션"],["FSLR","태양광 패널 대장","한화솔루션/OCI홀딩스"],["SEDG","태양광 인버터","한화솔루션"],["RUN","주거용 태양광","한화솔루션"],["PLUG","수소연료전지","두산퓨얼셀/범한퓨얼셀"],["BE","연료전지","두산퓨얼셀/범한퓨얼셀"],["ICLN","청정에너지ETF","한화솔루션/씨에스윈드"],["TAN","태양광ETF","한화솔루션/씨에스윈드"]]},
-  {n:"G. 순수방산",grp:['all','kr','defense'],t:[["LMT","F-35 방산대장","한화에어로스페이스/LIG넥스원/한국항공우주"],["NOC","스텔스/우주방산","한화에어로스페이스/LIG넥스원"],["GD","지상무기/함정","현대로템/한화오션"],["LHX","전자전/통신장비","LIG넥스원/한화시스템"],["RTX","미사일/항공엔진","LIG넥스원/한화에어로스페이스"],["HII","핵잠수함/항모","한화오션/HD현대중공업"],["AXON","경찰장비/테이저","미장흐름만"],["LDOS","방산IT/사이버","한화시스템"]]},
-  {n:"G. 항공우주/MRO",grp:['all','kr','defense'],t:[["TDG","항공부품 대장","한국항공우주/한화에어로스페이스"],["HWM","항공엔진부품","한화에어로스페이스"],["CW","항공전자/방산전자","한화시스템"],["RKLB","민간우주발사체","한화시스템/쎄트렉아이/인텔리안테크"],["KTOS","드론/방산","한화시스템/LIG넥스원"],["BA","보잉","한국항공우주/한화에어로스페이스"],["HEI","항공MRO/부품","한국항공우주/한화에어로스페이스"],["SPCX","민간우주 대장","한화시스템/쎄트렉아이/인텔리안테크/AP위성/컨텍"]]},
-  {n:"G. 중공업/기계",grp:['all'],t:[["CAT","건설중장비 대장","두산밥캣/HD현대인프라코어"],["DE","농기계","대동/TYM"],["GE","항공/에너지","두산에너빌리티"],["PCAR","트럭/중장비","미장흐름만"],["CMI","엔진/발전기","HD현대인프라코어/두산밥캣"],["URI","장비렌탈 대장","미장흐름만"],["PH","유압/모션제어","HD현대일렉트릭/LS ELECTRIC"],["ITW","산업부품","HD현대인프라코어/두산밥캣"]]},
-  {n:"G. 해운/물류",grp:['all','kr'],t:[["ZIM","컨테이너해운","HMM/흥아해운"],["DAC","컨테이너선임대","HMM"],["MATX","태평양컨테이너","미장흐름만"],["SBLK","건화물벌크 대장","팬오션/대한해운"],["GNK","건화물벌크","팬오션/대한해운"],["DSX","벌크/탱커","팬오션/대한해운"],["STNG","탱커해운","대한해운"],["INSW","탱커해운","대한해운"]]},
-  {n:"H. EV/자동차",grp:['all','kr'],t:[["TSLA","EV 대장","현대차/기아"],["RIVN","미국EV","현대차/기아"],["GM","미국완성차","현대차/기아"],["F","포드","현대차/기아"],["NIO","중국EV","현대차/기아"],["XPEV","샤오펑","현대차/기아"],["LI","리오토","현대차/기아"],["STLA","스텔란티스","현대차/기아"]]},
-  {n:"H. 2차전지/희토류",grp:['all','kr'],t:[["ALB","리튬 대장","에코프로/포스코퓨처엠/LG에너지솔루션"],["SQM","리튬채굴","에코프로/포스코퓨처엠/LG에너지솔루션"],["LAC","리튬개발","에코프로/포스코퓨처엠"],["MP","희토류 대장","유니온머티리얼/노바텍/동국알앤에스"],["ABAT","배터리재활용","성일하이텍/새빗켐"],["LIT","리튬/배터리ETF","에코프로/LG에너지솔루션/삼성SDI"],["SLI","리튬개발","에코프로/포스코퓨처엠"],["QS","전고체배터리","삼성SDI/LG에너지솔루션"]]},
-  {n:"I. 대형제약",grp:['all','bio'],t:[["LLY","GLP-1/비만약 대장","유한양행/한미약품/펩트론"],["JNJ","다각화제약","삼성바이오로직스/셀트리온"],["ABBV","면역질환/바이오","셀트리온/삼성바이오로직스"],["MRK","키트루다 항암","유한양행/한미약품"],["PFE","화이자","삼성바이오로직스/셀트리온"],["AMGN","바이오의약품","삼성바이오로직스/셀트리온"],["GILD","HIV/간염","셀트리온"],["REGN","항체치료제","에이비엘바이오/리가켐바이오"]]},
-  {n:"I. 바이오테크/임상",grp:['all','bio'],t:[["MRNA","mRNA 백신","한미약품/유한양행"],["BNTX","mRNA 백신","한미약품/유한양행"],["VRTX","희귀질환","에이비엘바이오/리가켐바이오"],["BIIB","신경질환","에이비엘바이오"],["CRSP","유전자편집","툴젠"],["ILMN","유전체분석","마크로젠"],["XBI","바이오테크ETF","HLB/에이비엘바이오/리가켐바이오"],["BMRN","희귀질환","에이비엘바이오/리가켐바이오"]]},
-  {n:"I. 의료기기",grp:['all','bio'],t:[["ISRG","로봇수술 대장","큐렉소/고영"],["ABT","진단기기/혈당","클래시스/바텍"],["BSX","심혈관기기","미장흐름만"],["EW","심장판막","미장흐름만"],["DXCM","연속혈당측정","아이센스"],["MDT","의료기기 대장","바텍/클래시스"],["SYK","정형외과","덴티움"],["ZBH","인공관절","덴티움"]]},
-  {n:"J. 미디어/스트리밍",grp:['all'],t:[["DIS","콘텐츠/테마파크","CJ ENM/스튜디오드래곤"],["PSKY","파라마운트스카이댄스","CJ ENM/스튜디오드래곤"],["WBD","워너브라더스","CJ ENM/스튜디오드래곤"],["SPOT","음악스트리밍 대장","하이브/JYP/SM"],["LYV","공연/티켓 대장","하이브/JYP/SM"],["WMG","워너뮤직","하이브/JYP/SM"],["NFLX","OTT 대장","스튜디오드래곤/CJ ENM/에이스토리"],["LION","영화/TV스튜디오","CJ ENM/스튜디오드래곤"]]},
-  {n:"J. 게임",grp:['all'],t:[["TTWO","GTA/2K","크래프톤/펄어비스"],["EA","스포츠게임","넷마블/엔씨소프트"],["RBLX","메타버스/UGC","크래프톤/네오위즈"],["U","게임엔진","크래프톤/펄어비스"],["DAVA","게임개발","크래프톤/펄어비스"],["PLTK","모바일게임","넷마블"],["APP","모바일광고 플랫폼","미장흐름만"],["GLBE","글로벌이커머스","미장흐름만"]]},
-  {n:"K. 로봇/자동화",grp:['all','kr'],t:[["SYM","물류로봇","레인보우로보틱스/두산로보틱스"],["CGNX","머신비전","고영/코닉오토메이션"],["ZBRA","물류자동화/RFID","현대무벡스/코닉오토메이션/고영/포스코DX"],["PATH","RPA자동화","포스코DX/현대오토에버"],["PTC","산업자동화SW","LS ELECTRIC/에스피지/포스코DX"],["ROK","공장자동화 대장","현대무벡스/코닉오토메이션/LS ELECTRIC/포스코DX"],["HON","산업/빌딩자동화","LS ELECTRIC/현대무벡스/포스코DX"],["EMR","산업자동화","LS ELECTRIC/에스피지"]]},
-  {n:"K. 양자컴퓨터",grp:['all','kr'],t:[["IONQ","양자컴퓨터 대장","우리로/엑스게이트/케이씨에스"],["RGTI","양자컴퓨터","우리로/엑스게이트"],["QBTS","양자컴퓨터","우리로/케이씨에스"],["QUBT","양자컴퓨터","우리로/케이씨에스"],["QNT","양자컴퓨터(퀀티뉴엄)","우리로/엑스게이트/케이씨에스"],["BBAI","AI/국방","한싹/솔트룩스"],["ARQQ","양자암호","엑스게이트/드림시큐리티"],["QTUM","양자ETF","우리로/엑스게이트/케이씨에스"]]},
-  {n:"L. 원자재/구리/금",grp:['all','kr'],t:[["FCX","구리채굴 대장","풍산/고려아연/LS"],["NEM","금채굴 대장","고려아연"],["GOLD","금채굴","고려아연"],["AA","알루미늄","조일알미늄/POSCO홀딩스"],["RIO","글로벌광산","POSCO홀딩스/고려아연"],["SCCO","구리채굴","풍산/이구산업/대창"],["NUE","철강 대장","POSCO홀딩스/현대제철"],["CLF","철강/광산","POSCO홀딩스/현대제철"]]},
+  {n:"반도체 대표주(생산)",grp:['all'],t:[["MU","DRAM/HBM 대장","삼성전자/SK하이닉스"],["SNDK","낸드플래시","삼성전자/SK하이닉스"]]},
+  {n:"시스템반도체",grp:['all'],t:[["NVDA","AI GPU 대장","삼성전자/SK하이닉스/이수페타시스"],["AMD","CPU/GPU","삼성전자/SK하이닉스/가온칩스"],["ARM","칩설계 라이선스","가온칩스/에이직랜드/오픈엣지"]]},
+  {n:"반도체장비",grp:['all'],t:[["AMAT","식각/증착 대장","한미반도체/원익IPS/피에스케이"],["LRCX","식각장비 대장","한미반도체/원익IPS/주성엔지니어링"],["ASML","노광장비 독점","원익IPS/넥스틴/오로스테크놀로지"]]},
+  {n:"반도체 재료/부품",grp:['all'],t:[["ENTG","고순도소재 대장","솔브레인/동진쎄미켐/한솔케미칼"],["UCTT","초고순도부품","원익머트리얼즈/레이크머티리얼즈"]]},
+  {n:"광통신",grp:['all'],t:[["CIEN","광통신장비 대장","오이솔루션/대한광통신/빛과전자"],["LITE","광부품","오이솔루션/대한광통신"],["COHR","레이저/광학","빛과전자/오이솔루션"]]},
+  {n:"전력/데센",grp:['all'],t:[["ETN","변압기/전력관리 대장","HD현대일렉트릭/효성중공업/LS ELECTRIC"],["VRT","데이터센터냉각","GST/한국전력"],["EQIX","데이터센터리츠","미장흐름만"]]},
+  {n:"클라우드",grp:['all'],t:[["MSFT","클라우드/SaaS 대장","LG CNS/현대오토에버/더존비즈온"],["GOOGL","클라우드/AI","LG CNS/현대오토에버"],["ORCL","엔터프라이즈DB","더존비즈온/영림원소프트랩"]]},
+  {n:"사이버보안",grp:['all'],t:[["CRWD","EDR/엔드포인트 대장","안랩/샌즈랩"],["PANW","통합보안플랫폼","안랩/지니언스"],["ZS","제로트러스트","라온시큐어/지니언스"]]},
+  {n:"인터넷 대표주",grp:['all'],t:[["GOOGL","클라우드/AI","NAVER/카카오"],["META","SNS/광고","NAVER/카카오/와이즈버즈"]]},
+  {n:"중국소비/관광",grp:['all'],t:[["BABA","중국이커머스 대장","아모레퍼시픽/LG생활건강/코스맥스"],["PDD","핀둬둬","아모레퍼시픽/LG생활건강/F&F"]]},
+  {n:"핀테크/크립토",grp:['all'],t:[["COIN","크립토거래소 대장","우리기술투자/한화투자증권/갤럭시아머니트리"],["HOOD","리테일투자","키움증권/미래에셋증권"],["IBIT","비트코인ETF","우리기술투자/갤럭시아머니트리"]]},
+  {n:"은행/증권",grp:['all'],t:[["JPM","미국최대은행","KB금융/신한지주/하나금융지주"],["GS","투자은행 대장","미래에셋증권/NH투자증권/한국금융지주"],["MS","투자은행","삼성증권/한국금융지주"]]},
+  {n:"보험",grp:['all'],t:[["MET","생명보험","삼성생명/한화생명/동양생명"],["PRU","보험/자산운용","삼성생명/한화생명"],["PGR","자동차보험","DB손해보험/현대해상/삼성화재"]]},
+  {n:"정유/LPG",grp:['all'],t:[["XOM","미국최대정유","S-Oil/SK이노베이션"],["CVX","쉐브론","S-Oil/SK이노베이션"],["EQT","천연가스/LNG","SK가스/한국가스공사"],["AR","천연가스","SK가스/E1"]]},
+  {n:"원전",grp:['all'],t:[["CCJ","우라늄채굴 대장","두산에너빌리티/한전기술/우진"],["CEG","원전운영 대장","두산에너빌리티/한전기술"],["SMR","SMR 대장","두산에너빌리티/우진/비에이치아이"]]},
+  {n:"신재생에너지",grp:['all'],t:[["ENPH","태양광 인버터","한화솔루션/HD현대에너지솔루션"],["FSLR","태양광 패널 대장","한화솔루션/OCI홀딩스"],["PLUG","수소연료전지","두산퓨얼셀/범한퓨얼셀"],["ICLN","청정에너지ETF","한화솔루션/씨에스윈드"]]},
+  {n:"순수방산",grp:['all'],t:[["LMT","F-35 방산대장","한화에어로스페이스/LIG넥스원/한국항공우주"],["NOC","스텔스/우주방산","한화에어로스페이스/LIG넥스원"],["RTX","미사일/항공엔진","LIG넥스원/한화에어로스페이스"]]},
+  {n:"항공우주/MRO",grp:['all'],t:[["RKLB","민간우주발사체","한화시스템/쎄트렉아이/인텔리안테크"],["TDG","항공부품 대장","한국항공우주/한화에어로스페이스"],["HWM","항공엔진부품","한화에어로스페이스"]]},
+  {n:"EV/자동차",grp:['all'],t:[["TSLA","EV 대장","현대차/기아"],["RIVN","미국EV","현대차/기아"],["GM","미국완성차","현대차/기아"]]},
+  {n:"2차전지/희토류",grp:['all'],t:[["ALB","리튬 대장","에코프로/포스코퓨처엠/LG에너지솔루션"],["SQM","리튬채굴","에코프로/포스코퓨처엠"],["LAC","리튬개발","에코프로/포스코퓨처엠"],["QS","전고체배터리","삼성SDI/LG에너지솔루션"],["MP","희토류 대장","유니온머티리얼/노바텍/동국알앤에스"]]},
+  {n:"대형제약",grp:['all'],t:[["LLY","GLP-1/비만약 대장","유한양행/한미약품/펩트론"],["MRK","키트루다 항암","유한양행/한미약품"],["PFE","화이자","삼성바이오로직스/셀트리온"]]},
+  {n:"바이오테크",grp:['all'],t:[["MRNA","mRNA 백신","한미약품/유한양행"],["CRSP","유전자편집","툴젠"],["ABBV","면역질환/바이오","셀트리온/삼성바이오로직스"]]},
+  {n:"미디어/엔터",grp:['all'],t:[["SPOT","음악스트리밍 대장","하이브/JYP/SM"],["LYV","공연/티켓 대장","하이브/JYP/SM"],["WMG","워너뮤직","하이브/JYP/SM"]]},
+  {n:"게임",grp:['all'],t:[["TTWO","GTA/2K","크래프톤/펄어비스"],["EA","스포츠게임","넷마블/엔씨소프트"],["RBLX","메타버스/UGC","크래프톤/네오위즈"]]},
+  {n:"양자컴퓨터",grp:['all'],t:[["IONQ","양자컴퓨터 대장","우리로/엑스게이트/케이씨에스"],["RGTI","양자컴퓨터","우리로/엑스게이트"],["QNT","양자컴퓨터(퀀티뉴엄)","우리로/엑스게이트/케이씨에스"]]},
+  {n:"철강",grp:['all'],t:[["NUE","철강 대장","POSCO홀딩스/현대제철"],["CLF","철강/광산","POSCO홀딩스/현대제철"]]},
+  {n:"비철금속",grp:['all'],t:[["FCX","구리채굴 대장","풍산/고려아연/LS"],["AA","알루미늄","조일알미늄/POSCO홀딩스"]]},
+  {n:"귀금속",grp:['all'],t:[["NEM","금채굴 대장","고려아연"],["GOLD","금채굴","고려아연"]]},
 ];
 
-let allData={}, liveData={}, curFilter='all', curTab='close';
+let allData={}, curFilter='all';
 
 function fmtC(c){if(c==null)return'N/A';const s=c>=0?'+':'';return s+c.toFixed(1)+'%';}
 function fmtV(v){if(!v)return'';if(v>=1e9)return(v/1e9).toFixed(1)+'B';if(v>=1e6)return(v/1e6).toFixed(1)+'M';if(v>=1e3)return(v/1e3).toFixed(0)+'K';return v;}
@@ -256,23 +214,20 @@ function intensityCls(c){
   if(c<=-5)return'd3'; if(c<=-2)return'd2'; if(c<=-0.5)return'd1';
   return'';
 }
-function sectorAvg(tickers,data){
-  data=data||allData;
-  const vals=tickers.map(([s])=>data[s]?.change).filter(v=>v!=null);
+function sectorAvg(tickers){
+  const vals=tickers.map(([s])=>allData[s]?.change).filter(v=>v!=null);
   return vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:null;
 }
-function sectorDiffusion(tickers,data){
-  data=data||allData;
-  const vals=tickers.map(([s])=>data[s]?.change).filter(v=>v!=null);
+function sectorDiffusion(tickers){
+  const vals=tickers.map(([s])=>allData[s]?.change).filter(v=>v!=null);
   if(!vals.length)return null;
   const up=vals.filter(v=>v>0).length;
   return {up, total:vals.length};
 }
 
-function renderDashboard(data, gridId, leadId){
-  data=data||allData; gridId=gridId||'top5Grid'; leadId=leadId||'leadersGrid';
-  const medals=['🥇','🥈','🥉','4위','5위','6위','7위','8위'];
-  const avgs=SECTORS.map(s=>({n:s.n.replace(/^[A-Z]\. /,''),avg:sectorAvg(s.t,data),full:s.n}))
+function renderDashboard(){
+  const medals=['🥇','🥈','🥉','4위','5위'];
+  const avgs=SECTORS.map(s=>({n:s.n.replace(/^[A-Z]\. /,''),avg:sectorAvg(s.t),full:s.n}))
     .filter(x=>x.avg!=null).sort((a,b)=>b.avg-a.avg);
   const maxAvg=Math.max(...avgs.map(x=>Math.abs(x.avg)),1);
 
@@ -281,7 +236,7 @@ function renderDashboard(data, gridId, leadId){
     if(!sec)return {trigger:'',stocks:''};
 
     // 전체 종목 등락률 기준 상위 3개 트리거
-    const allTk=sec.t.map(([sym,desc,kr])=>({sym,change:data[sym]?.change,kr}))
+    const allTk=sec.t.map(([sym,desc,kr])=>({sym,change:allData[sym]?.change,kr}))
       .filter(t=>t.change!=null).sort((a,b)=>b.change-a.change);
     const topTk=allTk.slice(0,3);
 
@@ -313,7 +268,7 @@ function renderDashboard(data, gridId, leadId){
     };
   }
 
-  document.getElementById(gridId).innerHTML=avgs.slice(0,8).map((x,i)=>{
+  document.getElementById('top5Grid').innerHTML=avgs.slice(0,5).map((x,i)=>{
     const cc=x.avg>0?'up':'dn';
     const sign=x.avg>=0?'+':'';
     const w=Math.max(8,Math.min(100,Math.abs(x.avg)/maxAvg*100));
@@ -327,7 +282,7 @@ function renderDashboard(data, gridId, leadId){
           </div>
           <div style="display:flex;align-items:center;gap:6px;">
             <span class="top5-val ${cc}">${sign}${x.avg.toFixed(1)}%</span>
-            <span style="font-size:11px;font-weight:700;color:#6e7d98;">${(()=>{const d=sectorDiffusion(SECTORS.find(s=>s.n===x.full).t,data);return d?d.up+'/'+d.total:'';})()}</span>
+            <span style="font-size:11px;font-weight:700;color:#6e7d98;">${(()=>{const d=sectorDiffusion(SECTORS.find(s=>s.n===x.full).t);return d?d.up+'/'+d.total:'';})()}</span>
           </div>
         </div>
         <div class="top5-bar-wrap"><div class="top5-bar" style="width:${w}%"></div></div>
@@ -341,13 +296,13 @@ function renderDashboard(data, gridId, leadId){
 
   const allTickers=[];
   SECTORS.forEach(s=>s.t.forEach(([sym,desc,kr])=>{
-    const d=data[sym];
+    const d=allData[sym];
     if(d?.change!=null)allTickers.push({sym,kr,change:d.change,sec:s.n.replace(/^[A-Z]\. /,'')});
   }));
   const leaders=allTickers.sort((a,b)=>b.change-a.change).slice(0,10);
   const hero=leaders[0];
   const rest=leaders.slice(1,10);
-  document.getElementById(leadId).innerHTML=hero?`
+  document.getElementById('leadersGrid').innerHTML=hero?`
     <div class="leader-hero">
       <div class="leader-hero-label">오늘의 1등</div>
       <div class="leader-hero-sym">${hero.sym} <span style="font-size:15px;font-weight:700;color:#8fa0bd;">${hero.sec}</span></div>
@@ -369,9 +324,8 @@ function scrollToSector(name){
 }
 
 function renderMain(){
-  const data=curTab==='live'?liveData:allData;
   document.getElementById('main').innerHTML=SECTORS.map(s=>{
-    const avg=sectorAvg(s.t,data);
+    const avg=sectorAvg(s.t);
     if(curFilter==='up'&&(avg==null||avg<=0))return'';
     if(curFilter==='dn'&&(avg==null||avg>=0))return'';
     if(!['all','up','dn'].includes(curFilter)&&!s.grp.includes(curFilter))return'';
@@ -379,13 +333,11 @@ function renderMain(){
     const sign=avg!=null&&avg>=0?'+':'';
     const id='sc-'+s.n.replace(/[^a-zA-Z0-9]/g,'_');
     const rows=s.t.map(([sym,desc,kr])=>{
-      const d=data[sym];
+      const d=allData[sym];
       const c=d?.change, p=d?.price, v=d?.volume;
-      const lc=d?.live_change, lp=d?.live_price;
-      const hasLive = lc!=null && Math.abs(lc) >= 0.01;
       const pStr=p!=null?'$'+p.toFixed(p>100?0:2):'';
       return `<div class="tk ${intensityCls(c)}">
-        <div class="tk-top"><span class="tk-sym">${sym}</span><div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;"><span class="tk-chg ${cls(c)}">${fmtC(c)}</span>${hasLive?`<span style="font-size:11px;font-weight:900;font-family:ui-monospace,monospace;color:#9aa7c4;">현재 ${fmtC(lc)}</span>`:''}</div></div>
+        <div class="tk-top"><span class="tk-sym">${sym}</span><span class="tk-chg ${cls(c)}">${fmtC(c)}</span></div>
         <span class="tk-desc">${desc}</span>
         <span class="tk-kr">${kr}</span>
         <div class="tk-vol"><span>${pStr}</span><span>${fmtV(v)}</span></div>
@@ -396,13 +348,6 @@ function renderMain(){
       <div class="tk-grid">${rows}</div>
     </div>`;
   }).join('');
-}
-
-function setSubTab(tab,btn){
-  curTab=tab;
-  document.querySelectorAll('.sub-tab').forEach(t=>t.classList.remove('active'));
-  btn.classList.add('active');
-  renderMain();
 }
 
 function setFilter(f,btn){
@@ -424,7 +369,7 @@ async function fetchAll(syms){
       if(r.ok){
         const d=await r.json();
         b.forEach(s=>{
-          if(d[s]&&d[s].price!=null){res[s]={price:d[s].price,change:d[s].change,volume:d[s].volume,live_price:d[s].live_price,live_change:d[s].live_change};}
+          if(d[s]&&d[s].price!=null)res[s]={price:d[s].price,change:d[s].change,volume:d[s].volume};
           else res[s]=null;
         });
       } else { b.forEach(s=>res[s]=null); }
@@ -441,18 +386,11 @@ async function loadData(){
   btn.classList.add('loading');
   try{
     const syms=[...new Set(SECTORS.flatMap(s=>s.t.map(t=>t[0])))];
-    const raw=await fetchAll(syms);
-    // allData = 종가 기준, liveData = 현재가 기준
-    Object.entries(raw).forEach(([s,d])=>{
-      if(!d)return;
-      allData[s]={price:d.price, change:d.change, volume:d.volume};
-      liveData[s]={price:d.live_price??d.price, change:d.live_change??d.change, volume:d.volume};
-    });
+    allData=await fetchAll(syms);
     const ok=Object.values(allData).filter(v=>v).length;
     document.getElementById('hdrSub').textContent=`32섹터 · ${ok}개 수집완료`;
     document.getElementById('footer').textContent=`업데이트: ${new Date().toLocaleString('ko-KR')} | ${ok}/${syms.length}개`;
-    renderDashboard(allData,'top5Grid','leadersGrid');
-    renderDashboard(liveData,'top5GridLive','leadersGridLive');
+    renderDashboard();
     renderMain();
   }catch(e){alert('오류: '+e.message);}
   finally{

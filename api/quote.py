@@ -77,7 +77,7 @@ class handler(BaseHTTPRequestHandler):
         for symbol in symbols:
             try:
                 # 1) 일봉 데이터
-                url_daily = f'https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?interval=1d&range=7d'
+                url_daily = f'https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?interval=1d&range=1mo'
                 req = urllib.request.Request(url_daily, headers={
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
                     'Accept': 'application/json',
@@ -90,20 +90,32 @@ class handler(BaseHTTPRequestHandler):
                 closes = [v for v in quote.get('close', []) if v is not None]
                 volumes = [v for v in quote.get('volume', []) if v is not None]
 
-                if len(closes) < 2:
-                    results[symbol] = {'error': 'Not enough data'}
+                if not closes:
+                    results[symbol] = {'error': 'No price data available'}
                     continue
 
                 if session == 'regular' and len(closes) >= 3:
-                    # 정규장 중에는 일봉 마지막값이 장중값일 수 있으므로
-                    # 확정 종가는 closes[-2], 전일 대비 change 기준은 closes[-3]
+                    # 정규장 중: closes[-1]이 장중 미확정 캔들일 수 있음
+                    # 확정 종가는 closes[-2], 전일 대비 기준은 closes[-3]
                     prev_for_change = closes[-3]
                     last = closes[-2]
                     vol = volumes[-2] if len(volumes) >= 2 else (volumes[-1] if volumes else 0)
-                else:
-                    # 프리마켓/장외/주말에는 가장 최근 확정 종가 기준
+                elif session == 'regular' and len(closes) == 2:
+                    # 신규 상장 정규장 중: closes[-1]이 장중 미확정 캔들일 수 있음
+                    # 종가 패널 오염 방지 → last=closes[-2], change=0으로 고정
+                    last = closes[-2]
+                    prev_for_change = closes[-2]
+                    vol = volumes[-1] if volumes else 0
+                elif len(closes) >= 2:
+                    # 프리마켓/장외: 최신 확정 종가 기준
                     prev_for_change = closes[-2]
                     last = closes[-1]
+                    vol = volumes[-1] if volumes else 0
+                else:
+                    # 신규 상장 데이터 1개: change=0 처리
+                    last = closes[-1]
+                    meta_open = result.get('meta', {}).get('regularMarketOpen')
+                    prev_for_change = meta_open if meta_open else last
                     vol = volumes[-1] if volumes else 0
 
                 if not prev_for_change:

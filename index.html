@@ -81,7 +81,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'Malgun Go
 .leader-hero-label{font-size:10px;color:var(--muted);font-weight:900;margin-bottom:4px;}
 .leader-hero-sym{font-size:25px;font-weight:950;color:#fff;line-height:1;letter-spacing:-0.8px;}
 .leader-hero-chg{font-size:32px;font-weight:950;color:var(--gold);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:-1.8px;margin-top:4px;line-height:1;}
-.leader-hero-kr{font-size:10px;color:var(--gold);font-weight:850;margin-top:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:rgba(247,200,74,0.08);padding:4px 6px;border-radius:6px;border:1px solid rgba(247,200,74,0.16);}
+.leader-hero-kr{display:none;}
 .leader-list{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
 .leader-item{padding:7px 8px;background:var(--surface2);border:1px solid var(--border2);border-radius:10px;display:flex;align-items:center;justify-content:space-between;gap:6px;min-height:34px;}
 .leader-rank{font-size:10px;color:var(--muted);font-weight:900;min-width:14px;}
@@ -115,8 +115,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'Malgun Go
 .tk-sym{font-size:16px;font-weight:950;color:#fff;letter-spacing:-0.3px;}
 .tk-chg{font-size:19px;font-weight:950;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:-1px;line-height:1;}
 .tk-desc{font-size:11px;color:#8fa0bd;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.tk-kr{font-size:11px;color:var(--gold);font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:3px 6px;background:rgba(247,200,74,0.075);border-radius:6px;border:1px solid rgba(247,200,74,0.16);margin-top:2px;}
-.tk-kr::before{content:'🎯 ';}
+.tk-kr{display:none;}
 .tk-vol{font-size:9.5px;color:var(--muted2);margin-top:auto;display:flex;justify-content:space-between;}
 .up{color:var(--up);} .dn{color:var(--down);} .fl{color:#70809b;}
 .overlay{position:fixed;inset:0;background:rgba(7,17,31,0.96);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:14px;}
@@ -310,7 +309,7 @@ function renderDashboard(data, gridId, leadId){
       <div class="leader-hero-label">오늘의 1등</div>
       <div class="leader-hero-sym">${hero.sym} <span style="font-size:15px;font-weight:700;color:#8fa0bd;">${hero.sec}</span></div>
       <div class="leader-hero-chg">${fmtC(hero.change)}</div>
-      <div class="leader-hero-kr">${hero.kr}</div>
+
     </div>
     <div class="leader-list">
       ${rest.map((x,i)=>`<div class="leader-item ${intensityCls(x.change)}">
@@ -343,7 +342,7 @@ function renderMain(data){
       return `<div class="tk ${intensityCls(c)}">
         <div class="tk-top"><span class="tk-sym">${sym}</span><span class="tk-chg ${cls(c)}">${fmtC(c)}</span></div>
         <span class="tk-desc">${desc}</span>
-        <span class="tk-kr">${kr}</span>
+
         <div class="tk-vol"><span>${pStr}</span><span>${fmtV(v)}</span></div>
       </div>`;
     }).join('');
@@ -429,23 +428,12 @@ async function loadData(){
 }
 
 function downloadCSV(){
-  const rows=[['날짜','섹터순위','섹터','티커','설명','국장매핑','등락률%','거래량','가격']];
+  const rows=[['날짜','섹터','티커','설명','국장매핑','등락률%','거래량','가격']];
   const today=new Date().toLocaleDateString('ko-KR');
-  // 섹터를 거래대금 가중평균 순으로 정렬
-  const sortedSectors=[...SECTORS].map(s=>({s,avg:sectorAvg(s.t,allData)}))
-    .filter(x=>x.avg!=null).sort((a,b)=>b.avg-a.avg);
-  sortedSectors.forEach(({s,avg},rank)=>{
-    // 섹터 내 티커도 등락률 높은 순으로 정렬
-    const sortedTickers=[...s.t].sort((a,b)=>{
-      const da=allData[a[0]]?.change??-999;
-      const db=allData[b[0]]?.change??-999;
-      return db-da;
-    });
-    sortedTickers.forEach(([sym,desc,kr])=>{
-      const d=allData[sym];
-      rows.push([today,rank+1,s.n,sym,desc,kr,d?.change!=null?d.change.toFixed(2):'',d?.volume||'',d?.price!=null?d.price.toFixed(2):'']);
-    });
-  });
+  SECTORS.forEach(s=>s.t.forEach(([sym,desc,kr])=>{
+    const d=allData[sym];
+    rows.push([today,s.n,sym,desc,kr,d?.change!=null?d.change.toFixed(2):'',d?.volume||'',d?.price!=null?d.price.toFixed(2):'']);
+  }));
   const csv=rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
   const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');

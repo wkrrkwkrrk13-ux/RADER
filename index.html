@@ -125,6 +125,16 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'Malgun Go
 @keyframes spin{to{transform:rotate(360deg);}}
 .spin-txt{font-size:12px;font-weight:800;color:var(--accent);}
 .footer{text-align:center;font-size:10px;color:var(--muted);padding:10px;border-top:1px solid var(--border);background:var(--surface);}
+.dual-col{display:grid;grid-template-columns:1fr 1px 1fr;gap:0;}
+.dual-panel{min-width:0;}
+.dual-divider{background:var(--border);margin:8px 0;}
+.dual-label{font-size:10px;font-weight:900;padding:6px 16px;letter-spacing:0.5px;}
+.close-label{color:#7c9cbf;background:rgba(43,149,255,0.06);border-bottom:1px solid rgba(43,149,255,0.15);}
+.live-label{color:#f7c84a;background:rgba(247,200,74,0.06);border-bottom:1px solid rgba(247,200,74,0.15);}
+@media(max-width:760px){.dual-col{grid-template-columns:1fr;}.dual-divider{height:1px;width:auto;margin:0;}}
+.sub-tab-row{display:flex;gap:6px;padding:8px 10px;background:var(--surface);border-bottom:1px solid var(--border);}
+.sub-tab{padding:5px 14px;border-radius:8px;font-size:11px;font-weight:900;background:var(--surface2);border:1px solid var(--border);color:#9aa7c4;cursor:pointer;}
+.sub-tab.active{background:rgba(247,200,74,0.15);border-color:rgba(247,200,74,0.4);color:var(--accent);}
 </style>
 </head>
 <body>
@@ -152,16 +162,38 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'Malgun Go
 </div>
 
 <div class="dashboard">
-  <div class="top-section">
-    <div class="top-title"><span>📊 섹터 자금흐름 순위</span><span style="color:var(--muted);font-weight:400;">전체</span></div>
-    <div class="top5-grid" id="top5Grid"></div>
-  </div>
-  <div class="top-section">
-    <div class="top-title"><span>🔥 오늘의 대장주 TOP10</span><span style="color:var(--muted);font-weight:400;">미장 개별 대장</span></div>
-    <div class="leaders-grid" id="leadersGrid"></div>
+  <div class="dual-col">
+    <div class="dual-panel">
+      <div class="dual-label close-label">📌 종가 기준</div>
+      <div class="top-section">
+        <div class="top-title"><span>📊 섹터 자금흐름 순위</span><span style="color:var(--muted);font-weight:400;">전체</span></div>
+        <div class="top5-grid" id="top5Grid"></div>
+      </div>
+      <div class="top-section">
+        <div class="top-title"><span>🔥 오늘의 대장주 TOP10</span><span style="color:var(--muted);font-weight:400;">미장 개별 대장</span></div>
+        <div class="leaders-grid" id="leadersGrid"></div>
+      </div>
+    </div>
+    <div class="dual-divider"></div>
+    <div class="dual-panel">
+      <div class="dual-label live-label">⚡ 현재가 기준</div>
+      <div class="top-section">
+        <div class="top-title"><span>📊 섹터 자금흐름 순위</span><span style="color:var(--muted);font-weight:400;">전체</span></div>
+        <div class="top5-grid" id="top5GridLive"></div>
+      </div>
+      <div class="top-section">
+        <div class="top-title"><span>🔥 오늘의 대장주 TOP10</span><span style="color:var(--muted);font-weight:400;">미장 개별 대장</span></div>
+        <div class="leaders-grid" id="leadersGridLive"></div>
+      </div>
+    </div>
   </div>
 </div>
 
+<div class="sub-tab-row">
+  <span style="font-size:10px;font-weight:700;color:var(--muted);padding:5px 4px;">섹터 기준:</span>
+  <div class="sub-tab active" onclick="setSubTab('close',this)">📌 종가</div>
+  <div class="sub-tab" onclick="setSubTab('live',this)">⚡ 현재가</div>
+</div>
 <div class="filter-row">
   <div class="ftab active" onclick="setFilter('all',this)">전체</div>
   <div class="ftab" onclick="setFilter('kr',this)">국장영향</div>
@@ -220,12 +252,21 @@ function intensityCls(c){
   if(c<=-5)return'd3'; if(c<=-2)return'd2'; if(c<=-0.5)return'd1';
   return'';
 }
-function sectorAvg(tickers){
-  const vals=tickers.map(([s])=>allData[s]?.change).filter(v=>v!=null);
-  return vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:null;
+function sectorAvg(tickers,data){
+  data=data||allData;
+  let weightedSum=0,totalWeight=0;
+  tickers.forEach(([s])=>{
+    const d=data[s];
+    if(d?.change==null)return;
+    const weight=(d.volume||0)*(d.price||0)||1;
+    weightedSum+=d.change*weight;
+    totalWeight+=weight;
+  });
+  return totalWeight>0?weightedSum/totalWeight:null;
 }
-function sectorDiffusion(tickers){
-  const vals=tickers.map(([s])=>allData[s]?.change).filter(v=>v!=null);
+function sectorDiffusion(tickers,data){
+  data=data||allData;
+  const vals=tickers.map(([s])=>data[s]?.change).filter(v=>v!=null);
   if(!vals.length)return null;
   const up=vals.filter(v=>v>0).length;
   return {up, total:vals.length};
@@ -331,7 +372,7 @@ function scrollToSector(name){
 
 function renderMain(){
   document.getElementById('main').innerHTML=SECTORS.map(s=>{
-    const avg=sectorAvg(s.t);
+    const avg=sectorAvg(s.t,data);
     if(curFilter==='up'&&(avg==null||avg<=0))return'';
     if(curFilter==='dn'&&(avg==null||avg>=0))return'';
     if(!['all','up','dn'].includes(curFilter)&&!s.grp.includes(curFilter))return'';
@@ -375,7 +416,7 @@ async function fetchAll(syms){
       if(r.ok){
         const d=await r.json();
         b.forEach(s=>{
-          if(d[s]&&d[s].price!=null)res[s]={price:d[s].price,change:d[s].change,volume:d[s].volume};
+          if(d[s]&&d[s].price!=null)res[s]={price:d[s].price,change:d[s].change,volume:d[s].volume,live_price:d[s].live_price,live_change:d[s].live_change};
           else res[s]=null;
         });
       } else { b.forEach(s=>res[s]=null); }
@@ -493,7 +534,7 @@ function scrollToSector(name){
 
 function renderMain(){
   document.getElementById('main').innerHTML=SECTORS.map(s=>{
-    const avg=sectorAvg(s.t);
+    const avg=sectorAvg(s.t,data);
     if(curFilter==='up'&&(avg==null||avg<=0))return'';
     if(curFilter==='dn'&&(avg==null||avg>=0))return'';
     if(!['all','up','dn'].includes(curFilter)&&!s.grp.includes(curFilter))return'';
@@ -537,7 +578,7 @@ async function fetchAll(syms){
       if(r.ok){
         const d=await r.json();
         b.forEach(s=>{
-          if(d[s]&&d[s].price!=null)res[s]={price:d[s].price,change:d[s].change,volume:d[s].volume};
+          if(d[s]&&d[s].price!=null)res[s]={price:d[s].price,change:d[s].change,volume:d[s].volume,live_price:d[s].live_price,live_change:d[s].live_change};
           else res[s]=null;
         });
       } else { b.forEach(s=>res[s]=null); }

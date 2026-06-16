@@ -234,7 +234,8 @@ const SECTORS=[
   {n:"귀금속",grp:['all'],t:[["NEM","금채굴 대장","고려아연"],["GOLD","금채굴","고려아연"]]},
 ]
 
-let allData={}, liveData={}, currentData=null, curFilter='all';
+let closeData={}, allData={}, liveData={}, currentData=null, curFilter='all';
+let closeDataLoaded=false;
 
 function fmtC(c){if(c==null)return'N/A';const s=c>=0?'+':'';return s+c.toFixed(1)+'%';}
 function fmtV(v){if(!v)return'';if(v>=1e9)return(v/1e9).toFixed(1)+'B';if(v>=1e6)return(v/1e6).toFixed(1)+'M';if(v>=1e3)return(v/1e3).toFixed(0)+'K';return v;}
@@ -246,7 +247,7 @@ function intensityCls(c){
   return'';
 }
 function sectorAvg(tickers,data){
-  data=data||allData;
+  data=data||closeData;
   let weightedSum=0,totalWeight=0;
   tickers.forEach(([s])=>{
     const d=data[s];
@@ -258,7 +259,7 @@ function sectorAvg(tickers,data){
   return totalWeight>0?weightedSum/totalWeight:null;
 }
 function sectorDiffusion(tickers,data){
-  data=data||allData;
+  data=data||closeData;
   const vals=tickers.map(([s])=>data[s]?.change).filter(v=>v!=null);
   if(!vals.length)return null;
   const up=vals.filter(v=>v>0).length;
@@ -267,7 +268,7 @@ function sectorDiffusion(tickers,data){
 
 
 function renderDashboard(data, gridId, leadId){
-  data=data||allData; gridId=gridId||'top5Grid'; leadId=leadId||'leadersGrid';
+  data=data||closeData; gridId=gridId||'top5Grid'; leadId=leadId||'leadersGrid';
   const avgs=SECTORS.map(s=>({n:s.n,avg:sectorAvg(s.t,data),full:s.n}))
     .filter(x=>x.avg!=null).sort((a,b)=>b.avg-a.avg);
   const maxAvg=Math.max(...avgs.map(x=>Math.abs(x.avg)),1);
@@ -326,7 +327,7 @@ function scrollToSector(name){
 }
 
 function renderMain(data){
-  data=data||currentData||allData;
+  data=data||currentData||closeData;
   document.getElementById('main').innerHTML=SECTORS.map(s=>{
     const avg=sectorAvg(s.t,data);
     if(curFilter==='up'&&(avg==null||avg<=0))return'';
@@ -363,7 +364,7 @@ function setFilter(f,btn){
 function setSubTab(type,btn){
   document.querySelectorAll('.sub-tab').forEach(t=>t.classList.remove('active'));
   btn.classList.add('active');
-  currentData=(type==='live')?liveData:allData;
+  currentData=(type==='live')?liveData:closeData;
   renderMain(currentData);
 }
 
@@ -412,12 +413,13 @@ async function loadData(){
   try{
     const syms=[...new Set(SECTORS.flatMap(s=>s.t.map(t=>t[0])))];
     allData=await fetchAll(syms);
+    if(!closeDataLoaded){ closeData=allData; closeDataLoaded=true; }
     liveData=buildLiveData(allData);
-    currentData=allData;
+    currentData=closeData;
     const ok=Object.values(allData).filter(v=>v).length;
     document.getElementById('hdrSub').textContent=`28섹터 · ${ok}개 수집완료`;
     document.getElementById('footer').textContent=`업데이트: ${new Date().toLocaleString('ko-KR')} | ${ok}/${syms.length}개`;
-    renderDashboard(allData,'top5Grid','leadersGrid');
+    renderDashboard(closeData,'top5Grid','leadersGrid');
     renderDashboard(liveData,'top5GridLive','leadersGridLive');
     renderMain(currentData);
   }catch(e){alert('오류: '+e.message);}
@@ -431,7 +433,7 @@ function downloadCSV(){
   const rows=[['날짜','섹터','티커','설명','등락률%','거래량','가격']];
   const today=new Date().toISOString().slice(0,10);
   SECTORS.forEach(s=>s.t.forEach(([sym,desc,kr])=>{
-    const d=allData[sym];
+    const d=closeData[sym];
     rows.push([today,s.n,sym,desc,d?.change!=null?d.change.toFixed(2):'',d?.volume||'',d?.price!=null?d.price.toFixed(2):'']);
   }));
   const csv=rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');

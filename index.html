@@ -429,12 +429,23 @@ async function loadData(){
 }
 
 function downloadCSV(){
-  const rows=[['날짜','섹터','티커','설명','국장매핑','등락률%','거래량','가격']];
+  const rows=[['날짜','섹터순위','섹터','티커','설명','국장매핑','등락률%','거래량','가격']];
   const today=new Date().toLocaleDateString('ko-KR');
-  SECTORS.forEach(s=>s.t.forEach(([sym,desc,kr])=>{
-    const d=allData[sym];
-    rows.push([today,s.n,sym,desc,kr,d?.change!=null?d.change.toFixed(2):'',d?.volume||'',d?.price!=null?d.price.toFixed(2):'']);
-  }));
+  // 섹터를 거래대금 가중평균 순으로 정렬
+  const sortedSectors=[...SECTORS].map(s=>({s,avg:sectorAvg(s.t,allData)}))
+    .filter(x=>x.avg!=null).sort((a,b)=>b.avg-a.avg);
+  sortedSectors.forEach(({s,avg},rank)=>{
+    // 섹터 내 티커도 등락률 높은 순으로 정렬
+    const sortedTickers=[...s.t].sort((a,b)=>{
+      const da=allData[a[0]]?.change??-999;
+      const db=allData[b[0]]?.change??-999;
+      return db-da;
+    });
+    sortedTickers.forEach(([sym,desc,kr])=>{
+      const d=allData[sym];
+      rows.push([today,rank+1,s.n,sym,desc,kr,d?.change!=null?d.change.toFixed(2):'',d?.volume||'',d?.price!=null?d.price.toFixed(2):'']);
+    });
+  });
   const csv=rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
   const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');

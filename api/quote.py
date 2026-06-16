@@ -37,14 +37,17 @@ def get_market_session(now_utc=None):
     et = now_utc + timedelta(hours=offset_hours)
     minutes = et.hour * 60 + et.minute
 
-    pre_start = 9 * 60
+    pre_start = 4 * 60        # ET 04:00 프리마켓 시작
     regular_start = 9 * 60 + 30
     regular_end = 16 * 60
+    after_end = 20 * 60       # ET 20:00 애프터마켓 종료
 
     if regular_start <= minutes < regular_end:
         return 'regular'
     if pre_start <= minutes < regular_start:
         return 'pre'
+    if regular_end <= minutes < after_end:
+        return 'pre'  # 애프터마켓도 현재가 패널 살아있게
     return 'closed'
 
 

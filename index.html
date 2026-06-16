@@ -428,11 +428,11 @@ async function loadData(){
 }
 
 function downloadCSV(){
-  const rows=[['날짜','섹터','티커','설명','국장매핑','등락률%','거래량','가격']];
-  const today=new Date().toLocaleDateString('ko-KR');
+  const rows=[['날짜','섹터','티커','설명','등락률%','거래량','가격']];
+  const today=new Date().toISOString().slice(0,10);
   SECTORS.forEach(s=>s.t.forEach(([sym,desc,kr])=>{
     const d=allData[sym];
-    rows.push([today,s.n,sym,desc,kr,d?.change!=null?d.change.toFixed(2):'',d?.volume||'',d?.price!=null?d.price.toFixed(2):'']);
+    rows.push([today,s.n,sym,desc,d?.change!=null?d.change.toFixed(2):'',d?.volume||'',d?.price!=null?d.price.toFixed(2):'']);
   }));
   const csv=rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
   const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});

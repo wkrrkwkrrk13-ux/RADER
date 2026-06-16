@@ -238,6 +238,7 @@ let closeData={}, allData={}, liveData={}, currentData=null, curFilter='all';
 let closeDataLoaded=false;
 let closeDataDateKey=null;
 let currentSubTab='close';
+let manualDateMode=false;
 
 function fmtC(c){if(c==null)return'N/A';const s=c>=0?'+':'';return s+c.toFixed(1)+'%';}
 function fmtV(v){if(!v)return'';if(v>=1e9)return(v/1e9).toFixed(1)+'B';if(v>=1e6)return(v/1e6).toFixed(1)+'M';if(v>=1e3)return(v/1e3).toFixed(0)+'K';return v;}
@@ -432,11 +433,16 @@ async function loadData(){
   try{
     const syms=[...new Set(SECTORS.flatMap(s=>s.t.map(t=>t[0])))];
     allData=await fetchAll(syms);
-    const dateKey=document.getElementById('dateInput')?.value || new Date().toISOString().slice(0,10);
-    if(!closeDataLoaded || closeDataDateKey!==dateKey){
+    const autoCloseKey=getUsCloseDate();
+    const inputKey=document.getElementById('dateInput')?.value;
+    // 수동 변경 여부를 값 비교가 아니라 플래그로 판단한다.
+    // 그래야 페이지를 오래 켜둔 상태에서 자동 기준일만 바뀌어도
+    // 과거 input 값이 수동 선택으로 오인되지 않는다.
+    const effectiveKey=(manualDateMode && inputKey)?inputKey:autoCloseKey;
+    if(!closeDataLoaded || closeDataDateKey!==effectiveKey){
       closeData=buildCloseData(allData);
       closeDataLoaded=true;
-      closeDataDateKey=dateKey;
+      closeDataDateKey=effectiveKey;
     }
     liveData=buildLiveData(allData);
     currentData=(currentSubTab==='live')?liveData:closeData;
@@ -455,7 +461,7 @@ async function loadData(){
 
 function downloadCSV(){
   const rows=[['날짜','섹터','티커','설명','등락률%','거래량','가격']];
-  const today=new Date().toISOString().slice(0,10);
+  const today=closeDataDateKey || getUsCloseDate();
   SECTORS.forEach(s=>s.t.forEach(([sym,desc,kr])=>{
     const d=closeData[sym];
     rows.push([today,s.n,sym,desc,d?.change!=null?d.change.toFixed(2):'',d?.volume||'',d?.price!=null?d.price.toFixed(2):'']);
@@ -468,13 +474,50 @@ function downloadCSV(){
   a.click();
 }
 
+function isUsDST(date){
+  // 미국 동부시간 기준 서머타임: 3월 두 번째 일요일 02:00 ET ~ 11월 첫 번째 일요일 02:00 ET
+  // UTC로는 시작 07:00 UTC(EST→EDT), 종료 06:00 UTC(EDT→EST)
+  const year=date.getUTCFullYear();
+
+  const mar=new Date(Date.UTC(year,2,1));
+  const secondSundayMarch=8+(7-mar.getUTCDay())%7;
+  const dstStart=new Date(Date.UTC(year,2,secondSundayMarch,7));
+
+  const nov=new Date(Date.UTC(year,10,1));
+  const firstSundayNovember=1+(7-nov.getUTCDay())%7;
+  const dstEnd=new Date(Date.UTC(year,10,firstSundayNovember,6));
+
+  return date>=dstStart && date<dstEnd;
+}
+
+function getUsCloseDate(now=new Date()){
+  const kst = new Date(now.getTime() + 9*60*60*1000);
+  const krHour = kst.getUTCHours();
+
+  // 서머타임 여부에 따라 정규장 마감 기준 시간이 다름
+  // 서머타임: 16:00 ET = KST 다음날 05:00
+  // 표준시: 16:00 ET = KST 다음날 06:00
+  const closeHour = isUsDST(now) ? 5 : 6;
+
+  // KST 마감시간 이전이면 아직 해당 미장 세션 종가가 확정되지 않았으므로 하루 더 뒤로 보낸다.
+  if(krHour < closeHour) kst.setUTCDate(kst.getUTCDate()-1);
+
+  // 미장 거래일은 KST 날짜보다 하루 전이다.
+  kst.setUTCDate(kst.getUTCDate()-1);
+
+  // 단순 주말 보정. 미국 휴장일은 백엔드/캘린더 연동 없이는 별도 처리 필요.
+  let dow = kst.getUTCDay();
+  if(dow===0) kst.setUTCDate(kst.getUTCDate()-2); // 일→금
+  if(dow===6) kst.setUTCDate(kst.getUTCDate()-1); // 토→금
+
+  return kst.toISOString().slice(0,10);
+}
+
 function initDate(){
   const inp=document.getElementById('dateInput');
-  const d=new Date();
-  const day=d.getDay();
-  d.setDate(d.getDate()-(day===0?2:day===6?1:1));
-  inp.value=d.toISOString().split('T')[0];
+  inp.value=getUsCloseDate();
   inp.addEventListener('change',()=>{
+    manualDateMode=true;
     closeDataLoaded=false;
     closeDataDateKey=null;
   });

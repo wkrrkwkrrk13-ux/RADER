@@ -236,6 +236,8 @@ const SECTORS=[
 
 let closeData={}, allData={}, liveData={}, currentData=null, curFilter='all';
 let closeDataLoaded=false;
+let closeDataDateKey=null;
+let currentSubTab='close';
 
 function fmtC(c){if(c==null)return'N/A';const s=c>=0?'+':'';return s+c.toFixed(1)+'%';}
 function fmtV(v){if(!v)return'';if(v>=1e9)return(v/1e9).toFixed(1)+'B';if(v>=1e6)return(v/1e6).toFixed(1)+'M';if(v>=1e3)return(v/1e3).toFixed(0)+'K';return v;}
@@ -252,7 +254,8 @@ function sectorAvg(tickers,data){
   tickers.forEach(([s])=>{
     const d=data[s];
     if(d?.change==null)return;
-    const weight=(d.volume||0)*(d.price||0)||1;
+    const weight=(d.volume||0)*(d.price||0);
+    if(weight<=0)return;
     weightedSum+=d.change*weight;
     totalWeight+=weight;
   });
@@ -362,10 +365,26 @@ function setFilter(f,btn){
 }
 
 function setSubTab(type,btn){
+  currentSubTab=type;
   document.querySelectorAll('.sub-tab').forEach(t=>t.classList.remove('active'));
   btn.classList.add('active');
   currentData=(type==='live')?liveData:closeData;
   renderMain(currentData);
+}
+
+function buildCloseData(data){
+  const out={};
+  Object.entries(data||{}).forEach(([sym,d])=>{
+    if(!d){ out[sym]=null; return; }
+    out[sym]={
+      price:d.price,
+      change:d.change,
+      volume:d.volume,
+      live_price:d.live_price,
+      live_change:d.live_change
+    };
+  });
+  return out;
 }
 
 function buildLiveData(data){
@@ -413,9 +432,14 @@ async function loadData(){
   try{
     const syms=[...new Set(SECTORS.flatMap(s=>s.t.map(t=>t[0])))];
     allData=await fetchAll(syms);
-    if(!closeDataLoaded){ closeData=allData; closeDataLoaded=true; }
+    const dateKey=document.getElementById('dateInput')?.value || new Date().toISOString().slice(0,10);
+    if(!closeDataLoaded || closeDataDateKey!==dateKey){
+      closeData=buildCloseData(allData);
+      closeDataLoaded=true;
+      closeDataDateKey=dateKey;
+    }
     liveData=buildLiveData(allData);
-    currentData=closeData;
+    currentData=(currentSubTab==='live')?liveData:closeData;
     const ok=Object.values(allData).filter(v=>v).length;
     document.getElementById('hdrSub').textContent=`28섹터 · ${ok}개 수집완료`;
     document.getElementById('footer').textContent=`업데이트: ${new Date().toLocaleString('ko-KR')} | ${ok}/${syms.length}개`;
@@ -450,6 +474,10 @@ function initDate(){
   const day=d.getDay();
   d.setDate(d.getDate()-(day===0?2:day===6?1:1));
   inp.value=d.toISOString().split('T')[0];
+  inp.addEventListener('change',()=>{
+    closeDataLoaded=false;
+    closeDataDateKey=null;
+  });
 }
 
 initDate();

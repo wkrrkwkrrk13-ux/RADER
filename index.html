@@ -36,14 +36,14 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'Malgun Go
 .btn-csv{background:rgba(247,200,74,0.12);border-color:rgba(247,200,74,0.35);color:var(--accent);}
 
 .date-row{padding:7px 12px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border);background:var(--bg2);}
-.date-input{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:5px 10px;border-radius:7px;font-size:11px;font-weight:800;}
+.date-label{font-size:11px;font-weight:800;color:var(--muted2);}
+.date-value{font-size:12px;font-weight:900;color:var(--accent);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;}
 
 .dashboard{padding:10px;display:flex;flex-direction:column;gap:12px;border-bottom:2px solid var(--border);background:linear-gradient(180deg,#081426 0%,#07111f 100%);}
 .top-section,.kr-section{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,0.28);}
 .top-title,.kr-title{padding:13px 16px;font-size:22px;font-weight:950;color:var(--accent);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;letter-spacing:-0.6px;}
 .top-title span:last-child{color:var(--muted2);font-size:12px;font-weight:850;}
 
-/* 섹터 자금흐름 순위 */
 .top5-grid{display:flex;flex-direction:column;gap:0;padding:10px;background:var(--surface);}
 .top5-item{position:relative;display:flex;flex-direction:column;padding:0;background:var(--surface2);border:1px solid var(--border2);border-bottom-width:0;cursor:pointer;overflow:hidden;min-height:44px;}
 .top5-item:first-child{border-radius:13px 13px 0 0;}
@@ -67,7 +67,6 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'Malgun Go
 .top5-item:nth-child(1) .top5-name{font-size:17px;}
 .top5-item:nth-child(1) .top5-trigger{font-size:16px;}
 .top5-item:nth-child(1) .top5-target{font-size:15px;}
-.top5-item:nth-child(n+4){}
 .top5-item:nth-child(n+4) .top5-name{font-size:14px;color:#d5ddf0;}
 .top5-item:nth-child(n+4) .top5-val{font-size:19px;}
 .top5-item:nth-child(n+4) .top5-trigger{font-size:13px;}
@@ -75,7 +74,6 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'Malgun Go
 .top5-item:nth-child(n+4) .top5-bar-wrap{height:4px;margin-top:5px;}
 @media(max-width:760px){.top5-grid{gap:7px}.top5-item{grid-template-columns:1fr;border-bottom-width:1px;border-radius:13px;min-height:auto}.top5-flow{border-right:0;border-bottom:1px solid rgba(120,150,205,0.22);padding:8px}.top5-signal{grid-template-columns:1fr;padding:5px 10px;}.top5-trigger{font-size:12px;white-space:normal;border-right:0;border-bottom:1px solid rgba(247,200,74,0.1);padding:5px 0;}.top5-target{font-size:11px;white-space:normal;background:none;padding:5px 0;}.top-title,.kr-title{font-size:18px}}
 
-/* 오늘의 대장: 공백 줄인 히어로 + TOP10 */
 .leaders-grid{display:grid;grid-template-columns:0.82fr 1.25fr;gap:8px;padding:9px;background:var(--surface);}
 .leader-hero{background:linear-gradient(135deg,#211d2a 0%,#121f35 100%);border:2px solid rgba(247,200,74,0.65);border-radius:13px;padding:10px 12px;display:flex;flex-direction:column;justify-content:center;min-height:92px;box-shadow:0 0 14px rgba(247,200,74,0.08);}
 .leader-hero-label{font-size:10px;color:var(--muted);font-weight:900;margin-bottom:4px;}
@@ -155,9 +153,8 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'Malgun Go
 </div>
 
 <div class="date-row">
-  <span style="color:var(--muted);font-size:10px;font-weight:700;">기준일:</span>
-  <input type="date" class="date-input" id="dateInput">
-  <button class="btn" onclick="loadData()" style="padding:3px 10px;">조회</button>
+  <span class="date-label">📌 기준 종가:</span>
+  <span class="date-value" id="dateDisplay">—</span>
 </div>
 
 <div class="dashboard">
@@ -238,7 +235,6 @@ let closeData={}, allData={}, liveData={}, currentData=null, curFilter='all';
 let closeDataLoaded=false;
 let closeDataDateKey=null;
 let currentSubTab='close';
-let manualDateMode=false;
 
 function fmtC(c){if(c==null)return'N/A';const s=c>=0?'+':'';return s+c.toFixed(1)+'%';}
 function fmtV(v){if(!v)return'';if(v>=1e9)return(v/1e9).toFixed(1)+'B';if(v>=1e6)return(v/1e6).toFixed(1)+'M';if(v>=1e3)return(v/1e3).toFixed(0)+'K';return v;}
@@ -269,7 +265,6 @@ function sectorDiffusion(tickers,data){
   const up=vals.filter(v=>v>0).length;
   return {up, total:vals.length};
 }
-
 
 function renderDashboard(data, gridId, leadId){
   data=data||closeData; gridId=gridId||'top5Grid'; leadId=leadId||'leadersGrid';
@@ -314,7 +309,6 @@ function renderDashboard(data, gridId, leadId){
       <div class="leader-hero-label">오늘의 1등</div>
       <div class="leader-hero-sym">${hero.sym} <span style="font-size:15px;font-weight:700;color:#8fa0bd;">${hero.sec}</span></div>
       <div class="leader-hero-chg">${fmtC(hero.change)}</div>
-
     </div>
     <div class="leader-list">
       ${rest.map((x,i)=>`<div class="leader-item ${intensityCls(x.change)}">
@@ -347,7 +341,6 @@ function renderMain(data){
       return `<div class="tk ${intensityCls(c)}">
         <div class="tk-top"><span class="tk-sym">${sym}</span><span class="tk-chg ${cls(c)}">${fmtC(c)}</span></div>
         <span class="tk-desc">${desc}</span>
-
         <div class="tk-vol"><span>${pStr}</span><span>${fmtV(v)}</span></div>
       </div>`;
     }).join('');
@@ -377,13 +370,7 @@ function buildCloseData(data){
   const out={};
   Object.entries(data||{}).forEach(([sym,d])=>{
     if(!d){ out[sym]=null; return; }
-    out[sym]={
-      price:d.price,
-      change:d.change,
-      volume:d.volume,
-      live_price:d.live_price,
-      live_change:d.live_change
-    };
+    out[sym]={price:d.price,change:d.change,volume:d.volume,live_price:d.live_price,live_change:d.live_change};
   });
   return out;
 }
@@ -392,18 +379,11 @@ function buildLiveData(data){
   const out={};
   Object.entries(data||{}).forEach(([sym,d])=>{
     if(!d){ out[sym]=null; return; }
-    out[sym]={
-      price:d.live_price??d.price,
-      change:d.live_change??d.change,
-      volume:d.volume,
-      live_price:d.live_price,
-      live_change:d.live_change
-    };
+    out[sym]={price:d.live_price??d.price,change:d.live_change??d.change,volume:d.volume,live_price:d.live_price,live_change:d.live_change};
   });
   return out;
 }
 
-// ── 배치 API 호출 (핵심: 20개씩 묶어서 호출) ──
 async function fetchAll(syms){
   const res={};
   const batchSize=20;
@@ -433,21 +413,17 @@ async function loadData(){
   try{
     const syms=[...new Set(SECTORS.flatMap(s=>s.t.map(t=>t[0])))];
     allData=await fetchAll(syms);
-    const autoCloseKey=getUsCloseDate();
-    const inputKey=document.getElementById('dateInput')?.value;
-    // 수동 변경 여부를 값 비교가 아니라 플래그로 판단한다.
-    // 그래야 페이지를 오래 켜둔 상태에서 자동 기준일만 바뀌어도
-    // 과거 input 값이 수동 선택으로 오인되지 않는다.
-    const effectiveKey=(manualDateMode && inputKey)?inputKey:autoCloseKey;
-    if(!closeDataLoaded || closeDataDateKey!==effectiveKey){
+    const dateKey=getUsCloseDate();
+    if(!closeDataLoaded || closeDataDateKey!==dateKey){
       closeData=buildCloseData(allData);
       closeDataLoaded=true;
-      closeDataDateKey=effectiveKey;
+      closeDataDateKey=dateKey;
     }
     liveData=buildLiveData(allData);
     currentData=(currentSubTab==='live')?liveData:closeData;
     const ok=Object.values(allData).filter(v=>v).length;
     document.getElementById('hdrSub').textContent=`28섹터 · ${ok}개 수집완료`;
+    document.getElementById('dateDisplay').textContent=closeDataDateKey+' 종가';
     document.getElementById('footer').textContent=`업데이트: ${new Date().toLocaleString('ko-KR')} | ${ok}/${syms.length}개`;
     renderDashboard(closeData,'top5Grid','leadersGrid');
     renderDashboard(liveData,'top5GridLive','leadersGridLive');
@@ -461,8 +437,8 @@ async function loadData(){
 
 function downloadCSV(){
   const rows=[['날짜','섹터','티커','설명','등락률%','거래량','가격']];
-  const today=closeDataDateKey || getUsCloseDate();
-  SECTORS.forEach(s=>s.t.forEach(([sym,desc,kr])=>{
+  const today=closeDataDateKey||getUsCloseDate();
+  SECTORS.forEach(s=>s.t.forEach(([sym,desc])=>{
     const d=closeData[sym];
     rows.push([today,s.n,sym,desc,d?.change!=null?d.change.toFixed(2):'',d?.volume||'',d?.price!=null?d.price.toFixed(2):'']);
   }));
@@ -475,55 +451,28 @@ function downloadCSV(){
 }
 
 function isUsDST(date){
-  // 미국 동부시간 기준 서머타임: 3월 두 번째 일요일 02:00 ET ~ 11월 첫 번째 일요일 02:00 ET
-  // UTC로는 시작 07:00 UTC(EST→EDT), 종료 06:00 UTC(EDT→EST)
   const year=date.getUTCFullYear();
-
   const mar=new Date(Date.UTC(year,2,1));
   const secondSundayMarch=8+(7-mar.getUTCDay())%7;
   const dstStart=new Date(Date.UTC(year,2,secondSundayMarch,7));
-
   const nov=new Date(Date.UTC(year,10,1));
   const firstSundayNovember=1+(7-nov.getUTCDay())%7;
   const dstEnd=new Date(Date.UTC(year,10,firstSundayNovember,6));
-
   return date>=dstStart && date<dstEnd;
 }
 
 function getUsCloseDate(now=new Date()){
-  const kst = new Date(now.getTime() + 9*60*60*1000);
-  const krHour = kst.getUTCHours();
-
-  // 서머타임 여부에 따라 정규장 마감 기준 시간이 다름
-  // 서머타임: 16:00 ET = KST 다음날 05:00
-  // 표준시: 16:00 ET = KST 다음날 06:00
-  const closeHour = isUsDST(now) ? 5 : 6;
-
-  // KST 마감시간 이전이면 아직 해당 미장 세션 종가가 확정되지 않았으므로 하루 더 뒤로 보낸다.
-  if(krHour < closeHour) kst.setUTCDate(kst.getUTCDate()-1);
-
-  // 미장 거래일은 KST 날짜보다 하루 전이다.
+  const kst=new Date(now.getTime()+9*60*60*1000);
+  const krHour=kst.getUTCHours();
+  const closeHour=isUsDST(now)?5:6;
+  if(krHour<closeHour)kst.setUTCDate(kst.getUTCDate()-1);
   kst.setUTCDate(kst.getUTCDate()-1);
-
-  // 단순 주말 보정. 미국 휴장일은 백엔드/캘린더 연동 없이는 별도 처리 필요.
-  let dow = kst.getUTCDay();
-  if(dow===0) kst.setUTCDate(kst.getUTCDate()-2); // 일→금
-  if(dow===6) kst.setUTCDate(kst.getUTCDate()-1); // 토→금
-
+  let dow=kst.getUTCDay();
+  if(dow===0)kst.setUTCDate(kst.getUTCDate()-2);
+  if(dow===6)kst.setUTCDate(kst.getUTCDate()-1);
   return kst.toISOString().slice(0,10);
 }
 
-function initDate(){
-  const inp=document.getElementById('dateInput');
-  inp.value=getUsCloseDate();
-  inp.addEventListener('change',()=>{
-    manualDateMode=true;
-    closeDataLoaded=false;
-    closeDataDateKey=null;
-  });
-}
-
-initDate();
 loadData();
 </script>
 </body>

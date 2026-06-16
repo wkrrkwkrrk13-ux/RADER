@@ -124,8 +124,8 @@ def quote_from_v8_meta(symbol, session):
 
     if session in ('pre', 'after') and closes_1m:
         live_price = float(closes_1m[-1])
-        if prev_close is not None and float(prev_close) != 0:
-            live_change = ((live_price - float(prev_close)) / float(prev_close)) * 100
+        if price is not None and float(price) != 0:
+            live_change = ((live_price - float(price)) / float(price)) * 100
         else:
             live_change = change_pct
     else:

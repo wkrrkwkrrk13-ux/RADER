@@ -1,0 +1,30 @@
+name: Fetch Prices
+
+on:
+  schedule:
+    # UTC 기준. 10분마다 실행 (GitHub는 정확한 시각 보장은 안 하지만 대체로 비슷하게 돌아감)
+    - cron: '*/10 * * * *'
+  workflow_dispatch:  # 수동 실행 버튼도 활성화
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run fetch script
+        run: python fetch_prices.py
+
+      - name: Commit and push if changed
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add cache/prices.json
+          git diff --staged --quiet || git commit -m "Update prices $(date -u +'%Y-%m-%d %H:%M UTC')"
+          git push

@@ -311,7 +311,7 @@ function renderUsRows(s){
 
 function renderKrRows(s){
   if(!s.k||!s.k.length)return `<tr><td colspan="5" class="empty">매칭 국장 종목 없음</td></tr>`;
-  const sorted=sortByChangeDesc(s.k, stock=>krCloseData[stock.y]?.change);
+  const sorted=sortByChangeDesc(s.k, stock=>krLiveData[stock.y]?.change);
   return sorted.map(stock=>{
     const sym=stock.y;
     const cd=krCloseData[sym];

@@ -72,20 +72,28 @@ def parse_symbol(symbol):
         last_ts, last_close, last_vol = valid[-1]
         last_date_str = datetime.fromtimestamp(last_ts, tz=kst).strftime("%Y-%m-%d")
 
-        # chart의 마지막 행이 "오늘" 날짜면 그게 현재가, 그 앞이 전일 확정 종가
-        if last_date_str == today_str and len(valid) >= 2:
+        # chart의 마지막 행이 "오늘" 날짜면 그게 현재가, 그 앞이 전일 확정 종가, 그 앞앞이 전전일 종가
+        if last_date_str == today_str and len(valid) >= 3:
+            regular_price = last_close          # 당일(현재) 가격
+            prev_close = valid[-2][1]            # 전일 종가
+            prev_prev_close = valid[-3][1]        # 전전일 종가
+            volume = last_vol
+        elif last_date_str == today_str and len(valid) == 2:
             regular_price = last_close
             prev_close = valid[-2][1]
+            prev_prev_close = meta.get("previousClose") or meta.get("chartPreviousClose")
             volume = last_vol
         elif last_date_str == today_str and len(valid) == 1:
             # 오늘 데이터뿐이면 전일 종가를 알 수 없음 -> meta 값에 의존
             regular_price = last_close
             prev_close = meta.get("previousClose") or meta.get("chartPreviousClose")
+            prev_prev_close = None
             volume = last_vol
         else:
-            # 마지막 행이 전일(장 마감 후 등) -> 그게 곧 전일 확정 종가
+            # 마지막 행이 전일(장 마감 후 등) -> 그게 곧 "당일" 확정 종가, valid[-2]가 전일 종가
             regular_price = meta.get("regularMarketPrice", last_close)
             prev_close = last_close
+            prev_prev_close = valid[-2][1] if len(valid) >= 2 else (meta.get("previousClose") or meta.get("chartPreviousClose"))
             volume = meta.get("regularMarketVolume") or last_vol
 
         if regular_price is None or regular_price <= 0:
@@ -93,16 +101,23 @@ def parse_symbol(symbol):
         if prev_close is None or prev_close <= 0:
             return None
 
-        change_pct = round((regular_price - prev_close) / prev_close * 100, 2)
-        volume = volume or 0
+        # 전일등락률: 전전일종가 -> 전일종가
+        if prev_prev_close and prev_prev_close > 0:
+            change_pct = round((prev_close - prev_prev_close) / prev_prev_close * 100, 2)
+        else:
+            change_pct = None
 
+        # 현재등락률: 전일종가 -> 현재가(당일종가)
+        live_change_pct = round((regular_price - prev_close) / prev_close * 100, 2)
+
+        volume = volume or 0
         session = "regular" if is_kr_market_open() else "closed"
 
         return {
             "price": round(prev_close, 2),
             "change": change_pct,
             "live_price": round(regular_price, 2),
-            "live_change": change_pct,
+            "live_change": live_change_pct,
             "session": session,
             "volume": volume,
         }

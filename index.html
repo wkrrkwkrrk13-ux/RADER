@@ -49,7 +49,8 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'Malgun Go
 
 .main{padding:8px;}
 .grid{display:flex;gap:5px;align-items:flex-start;}
-.grid.grid-vertical{flex-direction:column;}
+.grid.grid-vertical{flex-direction:column;align-items:center;}
+.grid.grid-vertical .col{max-width:640px;width:100%;}
 .col{flex:1;display:flex;flex-direction:column;gap:5px;min-width:0;}
 
 .sc{background:#0c1627;border:2px solid #2e4a72;border-radius:8px;overflow:hidden;box-shadow:0 0 0 1px #1a2e4a;}
@@ -281,8 +282,19 @@ function getNumCols(){
   return 6;
 }
 
+function sortByChangeDesc(items, getChange){
+  return [...items].sort((a,b)=>{
+    const ca=getChange(a), cb=getChange(b);
+    if(ca==null&&cb==null)return 0;
+    if(ca==null)return 1;
+    if(cb==null)return -1;
+    return cb-ca;
+  });
+}
+
 function renderUsRows(s){
-  return s.t.map(sym=>{
+  const sorted=sortByChangeDesc(s.t, sym=>closeData[sym]?.change);
+  return sorted.map(sym=>{
     const cd=closeData[sym];
     const ld=liveData[sym];
     const prevPrice=cd?.price, prevChange=cd?.change;
@@ -300,7 +312,8 @@ function renderUsRows(s){
 
 function renderKrRows(s){
   if(!s.k||!s.k.length)return `<tr><td colspan="5" class="empty">매칭 국장 종목 없음</td></tr>`;
-  return s.k.map(stock=>{
+  const sorted=sortByChangeDesc(s.k, stock=>krCloseData[stock.y]?.change);
+  return sorted.map(stock=>{
     const sym=stock.y;
     const cd=krCloseData[sym];
     const ld=krLiveData[sym];
@@ -364,7 +377,7 @@ function renderMain(){
         </div>
       </div>`;
     }).join('');
-    grid.innerHTML=`<div class="col" style="flex:none;width:100%;">${cardsHtml}</div>`;
+    grid.innerHTML=`<div class="col">${cardsHtml}</div>`;
     return;
   }
 

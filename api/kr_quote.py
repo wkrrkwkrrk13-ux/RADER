@@ -57,7 +57,6 @@ def parse_symbol(symbol):
         closes_raw = quote.get("close", [])
         volumes_raw = quote.get("volume", [])
 
-        # timestamp와 close를 함께 묶어서, None이 아닌 종가만 시간순으로 정렬된 채 추출
         valid = [
             (ts, c, volumes_raw[i] if i < len(volumes_raw) else None)
             for i, (ts, c) in enumerate(zip(timestamps, closes_raw))
@@ -67,33 +66,40 @@ def parse_symbol(symbol):
         if len(valid) < 1:
             return None
 
-        # 가장 최근 거래일 = 전일 확정 종가, 그 이전 = 전전일
+        kst = timezone(timedelta(hours=9))
+        today_str = datetime.now(kst).strftime("%Y-%m-%d")
+
         last_ts, last_close, last_vol = valid[-1]
+        last_date_str = datetime.fromtimestamp(last_ts, tz=kst).strftime("%Y-%m-%d")
 
-        regular_price = meta.get("regularMarketPrice", last_close)
-        prev_close = meta.get("previousClose")
+        # chart의 마지막 행이 "오늘" 날짜면 그게 현재가, 그 앞이 전일 확정 종가
+        if last_date_str == today_str and len(valid) >= 2:
+            regular_price = last_close
+            prev_close = valid[-2][1]
+            volume = last_vol
+        elif last_date_str == today_str and len(valid) == 1:
+            # 오늘 데이터뿐이면 전일 종가를 알 수 없음 -> meta 값에 의존
+            regular_price = last_close
+            prev_close = meta.get("previousClose") or meta.get("chartPreviousClose")
+            volume = last_vol
+        else:
+            # 마지막 행이 전일(장 마감 후 등) -> 그게 곧 전일 확정 종가
+            regular_price = meta.get("regularMarketPrice", last_close)
+            prev_close = last_close
+            volume = meta.get("regularMarketVolume") or last_vol
 
-        # meta.previousClose가 없거나 비정상적으로 차이나면 valid 리스트에서 직접 계산
-        if prev_close is None or prev_close <= 0:
-            if len(valid) >= 2:
-                prev_close = valid[-2][1]
-            else:
-                prev_close = last_close
-
-        # regularMarketPrice가 비정상(0 또는 None)이면 최근 종가로 대체
         if regular_price is None or regular_price <= 0:
             regular_price = last_close
-
-        if prev_close is None or prev_close == 0:
+        if prev_close is None or prev_close <= 0:
             return None
 
         change_pct = round((regular_price - prev_close) / prev_close * 100, 2)
-        volume = meta.get("regularMarketVolume") or last_vol or 0
+        volume = volume or 0
 
         session = "regular" if is_kr_market_open() else "closed"
 
         return {
-            "price": round(regular_price, 2),
+            "price": round(prev_close, 2),
             "change": change_pct,
             "live_price": round(regular_price, 2),
             "live_change": change_pct,

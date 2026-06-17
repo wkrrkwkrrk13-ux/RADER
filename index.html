@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#07070c">
-<title>미장 레이더 Terminal</title>
+<title>미장 Industry Radar</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 :root{
@@ -39,99 +39,39 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'Malgun Go
 .date-label{font-size:11px;font-weight:800;color:var(--muted2);}
 .date-value{font-size:12px;font-weight:900;color:var(--accent);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;}
 
-.dashboard{padding:10px;display:flex;flex-direction:column;gap:12px;border-bottom:2px solid var(--border);background:linear-gradient(180deg,#081426 0%,#07111f 100%);}
-.top-section,.kr-section{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,0.28);}
-.top-title,.kr-title{padding:13px 16px;font-size:22px;font-weight:950;color:var(--accent);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;letter-spacing:-0.6px;}
-.top-title span:last-child{color:var(--muted2);font-size:12px;font-weight:850;}
+.sub-tab-row{display:flex;gap:6px;padding:8px 10px;background:var(--surface);border-bottom:1px solid var(--border);}
+.sub-tab{padding:5px 14px;border-radius:8px;font-size:11px;font-weight:900;background:var(--surface2);border:1px solid var(--border);color:#9aa7c4;cursor:pointer;}
+.sub-tab.active{background:rgba(247,200,74,0.15);border-color:rgba(247,200,74,0.4);color:var(--accent);}
 
-.top5-grid{display:flex;flex-direction:column;gap:0;padding:10px;background:var(--surface);}
-.top5-item{position:relative;display:flex;flex-direction:column;padding:0;background:var(--surface2);border:1px solid var(--border2);border-bottom-width:0;cursor:pointer;overflow:hidden;min-height:44px;}
-.top5-item:first-child{border-radius:13px 13px 0 0;}
-.top5-item:last-child{border-bottom-width:1px;border-radius:0 0 13px 13px;}
-.top5-item:only-child{border-radius:13px;border-bottom-width:1px;}
-.top5-item:active{background:var(--surface3);}
-.top5-flow{min-width:0;padding:7px 12px;background:rgba(8,19,38,0.58);display:flex;flex-direction:column;justify-content:center;}
-.top5-signal{display:none;}
-.top5-head{display:flex;align-items:center;justify-content:space-between;gap:10px;}
-.top5-left{display:flex;align-items:center;gap:8px;min-width:0;}
-.top5-medal{font-size:15px;line-height:1;min-width:26px;text-align:center;font-weight:950;color:#d6e0f4;}
-.top5-name{font-size:15px;font-weight:950;color:var(--text);letter-spacing:-0.45px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.top5-val{font-size:21px;font-weight:950;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:-0.9px;line-height:1;color:#f2f6ff;}
-.top5-trigger{min-width:0;padding:10px;display:flex;align-items:center;font-size:14px;font-weight:800;color:#c9a7ff;line-height:1.4;border-right:1px solid rgba(247,200,74,0.18);}
-.top5-target{min-width:0;padding:10px;display:flex;align-items:center;background:rgba(247,200,74,0.055);font-size:13px;font-weight:800;color:var(--gold);line-height:1.4;}
-.top5-bar-wrap{height:5px;background:#07101f;border-radius:999px;margin-top:6px;overflow:hidden;border:1px solid rgba(255,255,255,0.04);}
-.top5-bar{height:100%;border-radius:999px;background:linear-gradient(90deg,#2b95ff,#7c5cff);}
-.top5-item:nth-child(1){background:linear-gradient(135deg,#16213a 0%,#151d32 100%);border-color:rgba(247,200,74,0.50);box-shadow:0 0 15px rgba(247,200,74,0.06);}
-.top5-item:nth-child(1) .top5-flow{border-right-color:rgba(247,200,74,0.30);}
-.top5-item:nth-child(1) .top5-val{color:var(--gold);font-size:26px;}
-.top5-item:nth-child(1) .top5-name{font-size:17px;}
-.top5-item:nth-child(1) .top5-trigger{font-size:16px;}
-.top5-item:nth-child(1) .top5-target{font-size:15px;}
-.top5-item:nth-child(n+4) .top5-name{font-size:14px;color:#d5ddf0;}
-.top5-item:nth-child(n+4) .top5-val{font-size:19px;}
-.top5-item:nth-child(n+4) .top5-trigger{font-size:13px;}
-.top5-item:nth-child(n+4) .top5-target{font-size:12px;}
-.top5-item:nth-child(n+4) .top5-bar-wrap{height:4px;margin-top:5px;}
-@media(max-width:760px){.top5-grid{gap:7px}.top5-item{grid-template-columns:1fr;border-bottom-width:1px;border-radius:13px;min-height:auto}.top5-flow{border-right:0;border-bottom:1px solid rgba(120,150,205,0.22);padding:8px}.top5-signal{grid-template-columns:1fr;padding:5px 10px;}.top5-trigger{font-size:12px;white-space:normal;border-right:0;border-bottom:1px solid rgba(247,200,74,0.1);padding:5px 0;}.top5-target{font-size:11px;white-space:normal;background:none;padding:5px 0;}.top-title,.kr-title{font-size:18px}}
+.main{padding:10px;}
+.grid{display:flex;gap:6px;align-items:flex-start;}
+.col{flex:1;display:flex;flex-direction:column;gap:6px;min-width:0;}
 
-.leaders-grid{display:grid;grid-template-columns:0.82fr 1.25fr;gap:8px;padding:9px;background:var(--surface);}
-.leader-hero{background:linear-gradient(135deg,#211d2a 0%,#121f35 100%);border:2px solid rgba(247,200,74,0.65);border-radius:13px;padding:10px 12px;display:flex;flex-direction:column;justify-content:center;min-height:92px;box-shadow:0 0 14px rgba(247,200,74,0.08);}
-.leader-hero-label{font-size:10px;color:var(--muted);font-weight:900;margin-bottom:4px;}
-.leader-hero-sym{font-size:25px;font-weight:950;color:#fff;line-height:1;letter-spacing:-0.8px;}
-.leader-hero-chg{font-size:32px;font-weight:950;color:var(--gold);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:-1.8px;margin-top:4px;line-height:1;}
-.leader-hero-kr{display:none;}
-.leader-list{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
-.leader-item{padding:7px 8px;background:var(--surface2);border:1px solid var(--border2);border-radius:10px;display:flex;align-items:center;justify-content:space-between;gap:6px;min-height:34px;}
-.leader-rank{font-size:10px;color:var(--muted);font-weight:900;min-width:14px;}
-.leader-sym{font-size:13px;font-weight:950;color:#fff;min-width:38px;}
-.leader-chg{font-size:14px;font-weight:950;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:-0.5px;}
-.leader-kr{display:none;}
-@media(max-width:600px){.leaders-grid{grid-template-columns:1fr;}.leader-list{grid-template-columns:repeat(2,1fr);}.leader-item{min-height:38px}.leader-chg{font-size:15px;}}
+.sc{background:#0c1627;border:2px solid #2e4a72;border-radius:8px;overflow:hidden;box-shadow:0 0 0 1px #1a2e4a;}
+.sc-hdr{padding:6px 10px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(90deg,#1a3a5c 0%,#0f2040 100%);border-bottom:2px solid #2e4a72;gap:6px;}
+.sc-name{font-size:12px;font-weight:950;color:#fff;letter-spacing:-0.2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sc-avg{font-size:14px;font-weight:950;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:-0.5px;flex-shrink:0;}
+.sc-perf{padding:3px 10px;font-size:9px;color:#fff;background:#080f1e;border-bottom:1px solid #151f33;}
 
-.filter-row{padding:9px 10px;display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--border);background:#07111f;}
-.filter-row::-webkit-scrollbar{display:none;}
-.ftab{flex-shrink:0;padding:6px 12px;border-radius:8px;font-size:11px;font-weight:900;background:var(--surface);border:1px solid var(--border);color:#9aa7c4;cursor:pointer;white-space:nowrap;}
-.ftab.active{background:var(--accent);border-color:var(--accent);color:#000;box-shadow:0 0 12px rgba(247,200,74,0.16);}
+table{width:100%;border-collapse:collapse;}
+.col-header td{color:#fff;font-size:8px;font-weight:900;border-bottom:1px solid #1a2a40;padding:2px 6px;}
+td{padding:2px 6px;border-bottom:1px solid #0e1a2e;font-size:10px;line-height:1.5;white-space:nowrap;}
+td:first-child{overflow:hidden;text-overflow:ellipsis;}
+td:nth-child(2),td:nth-child(3){text-align:right;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;width:60px;}
+td:nth-child(4){text-align:right;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:900;width:54px;}
+.up{color:var(--up)!important;} .dn{color:var(--down)!important;} .fl{color:#9aa7c4!important;}
+.empty{color:#2a3a52;text-align:center;padding:8px;font-size:9px;}
 
-.main{padding:10px 10px 64px;display:flex;flex-direction:column;gap:14px;}
-.sc{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 6px 16px rgba(0,0,0,0.20);}
-.sc-hdr{padding:10px 12px;display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border-bottom:2px solid var(--border);}
-.sc-name{font-size:15px;font-weight:950;color:#fff;letter-spacing:-0.35px;}
-.sc-avg{font-size:22px;font-weight:950;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:-1px;}
-.tk-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:8px;background:#07111f;}
-@media(max-width:600px){.tk-grid{grid-template-columns:repeat(2,1fr);gap:8px;}}
-@media(min-width:1400px){.tk-grid{grid-template-columns:repeat(8,1fr);}}
-.tk{padding:10px;background:#101a2d;border-radius:12px;display:flex;flex-direction:column;gap:5px;border:1px solid #263858;min-height:92px;}
-.tk.c1{background:rgba(255,77,103,0.045);border-color:rgba(255,77,103,0.15);}
-.tk.c2{background:rgba(255,77,103,0.11);border-color:rgba(255,77,103,0.32);}
-.tk.c3{background:rgba(255,77,103,0.21);border-color:var(--up);box-shadow:0 0 12px rgba(255,77,103,0.12);}
-.tk.c4{background:linear-gradient(135deg,rgba(255,77,103,0.28) 0%,rgba(247,200,74,0.18) 100%);border-color:var(--gold);box-shadow:0 0 16px rgba(247,200,74,0.18);}
-.tk.d1{background:rgba(43,149,255,0.05);border-color:rgba(43,149,255,0.15);}
-.tk.d2{background:rgba(43,149,255,0.12);border-color:rgba(43,149,255,0.32);}
-.tk.d3{background:rgba(43,149,255,0.22);border-color:var(--down);box-shadow:0 0 12px rgba(43,149,255,0.12);}
-.tk-top{display:flex;justify-content:space-between;align-items:flex-start;gap:4px;}
-.tk-sym{font-size:16px;font-weight:950;color:#fff;letter-spacing:-0.3px;}
-.tk-chg{font-size:19px;font-weight:950;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:-1px;line-height:1;}
-.tk-desc{font-size:11px;color:#8fa0bd;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.tk-kr{display:none;}
-.tk-vol{font-size:9.5px;color:var(--muted2);margin-top:auto;display:flex;justify-content:space-between;}
-.up{color:var(--up);} .dn{color:var(--down);} .fl{color:#70809b;}
 .overlay{position:fixed;inset:0;background:rgba(7,17,31,0.96);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:14px;}
 .overlay.hidden{display:none;}
 .spin{width:42px;height:42px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.6s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
 .spin-txt{font-size:12px;font-weight:800;color:var(--accent);}
 .footer{text-align:center;font-size:10px;color:var(--muted);padding:10px;border-top:1px solid var(--border);background:var(--surface);}
-.dual-col{display:grid;grid-template-columns:1fr 1px 1fr;gap:0;}
-.dual-panel{min-width:0;}
-.dual-divider{background:var(--border);margin:8px 0;}
-.dual-label{font-size:10px;font-weight:900;padding:6px 16px;letter-spacing:0.5px;}
-.close-label{color:#7c9cbf;background:rgba(43,149,255,0.06);border-bottom:1px solid rgba(43,149,255,0.15);}
-.live-label{color:#f7c84a;background:rgba(247,200,74,0.06);border-bottom:1px solid rgba(247,200,74,0.15);}
-@media(max-width:760px){.dual-col{grid-template-columns:1fr;}.dual-divider{height:1px;width:auto;margin:0;}}
-.sub-tab-row{display:flex;gap:6px;padding:8px 10px;background:var(--surface);border-bottom:1px solid var(--border);}
-.sub-tab{padding:5px 14px;border-radius:8px;font-size:11px;font-weight:900;background:var(--surface2);border:1px solid var(--border);color:#9aa7c4;cursor:pointer;}
-.sub-tab.active{background:rgba(247,200,74,0.15);border-color:rgba(247,200,74,0.4);color:var(--accent);}
+@media(max-width:900px){
+  .grid{flex-direction:column;}
+  .col{flex:none;}
+}
 </style>
 </head>
 <body>
@@ -143,8 +83,8 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'Malgun Go
 
 <div class="hdr">
   <div>
-    <div class="hdr-title">📡 미장 레이더 터미널</div>
-    <div class="hdr-sub" id="hdrSub">28섹터 · 미장 자금흐름 레이더</div>
+    <div class="hdr-title">📡 미장 Industry Radar</div>
+    <div class="hdr-sub" id="hdrSub">93개 industry · 미장 자금흐름 레이더</div>
   </div>
   <div class="hdr-right">
     <button class="btn btn-csv" onclick="downloadCSV()">⬇ CSV</button>
@@ -157,98 +97,125 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'Malgun Go
   <span class="date-value" id="dateDisplay">—</span>
 </div>
 
-<div class="dashboard">
-  <div class="dual-col">
-    <div class="dual-panel">
-      <div class="dual-label close-label">📌 종가 기준</div>
-      <div class="top-section">
-        <div class="top-title"><span>📊 섹터 자금흐름 순위</span><span style="color:var(--muted);font-weight:400;">전체</span></div>
-        <div class="top5-grid" id="top5Grid"></div>
-      </div>
-      <div class="top-section">
-        <div class="top-title"><span>🔥 오늘의 대장주 TOP10</span><span style="color:var(--muted);font-weight:400;">미장 개별 대장</span></div>
-        <div class="leaders-grid" id="leadersGrid"></div>
-      </div>
-    </div>
-    <div class="dual-divider"></div>
-    <div class="dual-panel">
-      <div class="dual-label live-label">⚡ 현재가 기준</div>
-      <div class="top-section">
-        <div class="top-title"><span>📊 섹터 자금흐름 순위</span><span style="color:var(--muted);font-weight:400;">전체</span></div>
-        <div class="top5-grid" id="top5GridLive"></div>
-      </div>
-      <div class="top-section">
-        <div class="top-title"><span>🔥 오늘의 대장주 TOP10</span><span style="color:var(--muted);font-weight:400;">미장 개별 대장</span></div>
-        <div class="leaders-grid" id="leadersGridLive"></div>
-      </div>
-    </div>
-  </div>
-</div>
-
 <div class="sub-tab-row">
-  <span style="font-size:10px;font-weight:700;color:var(--muted);padding:5px 4px;">섹터 기준:</span>
+  <span style="font-size:10px;font-weight:700;color:var(--muted);padding:5px 4px;">기준:</span>
   <div class="sub-tab active" onclick="setSubTab('close',this)">📌 종가</div>
   <div class="sub-tab" onclick="setSubTab('live',this)">⚡ 현재가</div>
 </div>
-<div class="filter-row">
-  <div class="ftab active" onclick="setFilter('all',this)">전체</div>
-  <div class="ftab" onclick="setFilter('up',this)">상승↑</div>
-  <div class="ftab" onclick="setFilter('dn',this)">하락↓</div>
-</div>
 
-<div class="main" id="main"></div>
+<div class="main"><div class="grid" id="grid"></div></div>
 <div class="footer" id="footer"></div>
 
 <script>
 const SECTORS=[
-  {n:"반도체 대표주(생산)",grp:['all'],t:[["MU","DRAM/HBM 대장","삼성전자/SK하이닉스"],["SNDK","낸드플래시","삼성전자/SK하이닉스"]]},
-  {n:"시스템반도체",grp:['all'],t:[["NVDA","AI GPU 대장","삼성전자/SK하이닉스/이수페타시스"],["AMD","CPU/GPU","삼성전자/SK하이닉스/가온칩스"],["ARM","칩설계 라이선스","가온칩스/에이직랜드/오픈엣지"]]},
-  {n:"반도체장비",grp:['all'],t:[["AMAT","식각/증착 대장","한미반도체/원익IPS/피에스케이"],["LRCX","식각장비 대장","한미반도체/원익IPS/주성엔지니어링"],["ASML","노광장비 독점","원익IPS/넥스틴/오로스테크놀로지"]]},
-  {n:"반도체 재료/부품",grp:['all'],t:[["ENTG","고순도소재 대장","솔브레인/동진쎄미켐/한솔케미칼"],["UCTT","초고순도부품","원익머트리얼즈/레이크머티리얼즈"]]},
-  {n:"광통신",grp:['all'],t:[["CIEN","광통신장비 대장","오이솔루션/대한광통신/빛과전자"],["LITE","광부품","오이솔루션/대한광통신"],["COHR","레이저/광학","빛과전자/오이솔루션"]]},
-  {n:"전력/데센",grp:['all'],t:[["ETN","변압기/전력관리 대장","HD현대일렉트릭/효성중공업/LS ELECTRIC"],["VRT","데이터센터냉각","GST/한국전력"],["EQIX","데이터센터리츠","미장흐름만"]]},
-  {n:"클라우드",grp:['all'],t:[["MSFT","클라우드/SaaS 대장","LG CNS/현대오토에버/더존비즈온"],["GOOGL","클라우드/AI","LG CNS/현대오토에버"],["ORCL","엔터프라이즈DB","더존비즈온/영림원소프트랩"]]},
-  {n:"사이버보안",grp:['all'],t:[["CRWD","EDR/엔드포인트 대장","안랩/샌즈랩"],["PANW","통합보안플랫폼","안랩/지니언스"],["ZS","제로트러스트","라온시큐어/지니언스"]]},
-  {n:"인터넷 대표주",grp:['all'],t:[["GOOGL","클라우드/AI","NAVER/카카오"],["META","SNS/광고","NAVER/카카오/와이즈버즈"]]},
-  {n:"중국소비/관광",grp:['all'],t:[["BABA","중국이커머스 대장","아모레퍼시픽/LG생활건강/코스맥스"],["PDD","핀둬둬","아모레퍼시픽/LG생활건강/F&F"]]},
-  {n:"핀테크/크립토",grp:['all'],t:[["COIN","크립토거래소 대장","우리기술투자/한화투자증권/갤럭시아머니트리"],["HOOD","리테일투자","키움증권/미래에셋증권"],["IBIT","비트코인ETF","우리기술투자/갤럭시아머니트리"]]},
-  {n:"은행/증권",grp:['all'],t:[["JPM","미국최대은행","KB금융/신한지주/하나금융지주"],["GS","투자은행 대장","미래에셋증권/NH투자증권/한국금융지주"],["MS","투자은행","삼성증권/한국금융지주"]]},
-  {n:"보험",grp:['all'],t:[["MET","생명보험","삼성생명/한화생명/동양생명"],["PRU","보험/자산운용","삼성생명/한화생명"],["PGR","자동차보험","DB손해보험/현대해상/삼성화재"]]},
-  {n:"정유/LPG",grp:['all'],t:[["XOM","미국최대정유","S-Oil/SK이노베이션"],["CVX","쉐브론","S-Oil/SK이노베이션"],["EQT","천연가스/LNG","SK가스/한국가스공사"],["AR","천연가스","SK가스/E1"]]},
-  {n:"원전",grp:['all'],t:[["CCJ","우라늄채굴 대장","두산에너빌리티/한전기술/우진"],["CEG","원전운영 대장","두산에너빌리티/한전기술"],["SMR","SMR 대장","두산에너빌리티/우진/비에이치아이"]]},
-  {n:"신재생에너지",grp:['all'],t:[["ENPH","태양광 인버터","한화솔루션/HD현대에너지솔루션"],["FSLR","태양광 패널 대장","한화솔루션/OCI홀딩스"],["PLUG","수소연료전지","두산퓨얼셀/범한퓨얼셀"],["ICLN","청정에너지ETF","한화솔루션/씨에스윈드"]]},
-  {n:"순수방산",grp:['all'],t:[["LMT","F-35 방산대장","한화에어로스페이스/LIG넥스원/한국항공우주"],["NOC","스텔스/우주방산","한화에어로스페이스/LIG넥스원"],["RTX","미사일/항공엔진","LIG넥스원/한화에어로스페이스"]]},
-  {n:"항공우주/MRO",grp:['all'],t:[["SPCX","스페이스엑스","한화시스템"],["RKLB","민간우주발사체","한화시스템/쎄트렉아이/인텔리안테크"],["TDG","항공부품 대장","한국항공우주/한화에어로스페이스"],["HWM","항공엔진부품","한화에어로스페이스"]]},
-  {n:"EV/자동차",grp:['all'],t:[["TSLA","EV 대장","현대차/기아"],["RIVN","미국EV","현대차/기아"],["GM","미국완성차","현대차/기아"]]},
-  {n:"2차전지/희토류",grp:['all'],t:[["ALB","리튬 대장","에코프로/포스코퓨처엠/LG에너지솔루션"],["SQM","리튬채굴","에코프로/포스코퓨처엠"],["LAC","리튬개발","에코프로/포스코퓨처엠"],["QS","전고체배터리","삼성SDI/LG에너지솔루션"],["MP","희토류 대장","유니온머티리얼/노바텍/동국알앤에스"]]},
-  {n:"대형제약",grp:['all'],t:[["LLY","GLP-1/비만약 대장","유한양행/한미약품/펩트론"],["MRK","키트루다 항암","유한양행/한미약품"],["PFE","화이자","삼성바이오로직스/셀트리온"]]},
-  {n:"바이오테크",grp:['all'],t:[["MRNA","mRNA 백신","한미약품/유한양행"],["CRSP","유전자편집","툴젠"],["ABBV","면역질환/바이오","셀트리온/삼성바이오로직스"]]},
-  {n:"미디어/엔터",grp:['all'],t:[["SPOT","음악스트리밍 대장","하이브/JYP/SM"],["LYV","공연/티켓 대장","하이브/JYP/SM"],["WMG","워너뮤직","하이브/JYP/SM"]]},
-  {n:"게임",grp:['all'],t:[["TTWO","GTA/2K","크래프톤/펄어비스"],["EA","스포츠게임","넷마블/엔씨소프트"],["RBLX","메타버스/UGC","크래프톤/네오위즈"]]},
-  {n:"양자컴퓨터",grp:['all'],t:[["IONQ","양자컴퓨터 대장","우리로/엑스게이트/케이씨에스"],["RGTI","양자컴퓨터","우리로/엑스게이트"],["QNT","양자컴퓨터(퀀티뉴엄)","우리로/엑스게이트/케이씨에스"]]},
-  {n:"철강",grp:['all'],t:[["NUE","철강 대장","POSCO홀딩스/현대제철"],["CLF","철강/광산","POSCO홀딩스/현대제철"]]},
-  {n:"비철금속",grp:['all'],t:[["FCX","구리채굴 대장","풍산/고려아연/LS"],["AA","알루미늄","조일알미늄/POSCO홀딩스"]]},
-  {n:"귀금속",grp:['all'],t:[["NEM","금채굴 대장","고려아연"],["GOLD","금채굴","고려아연"]]},
-]
+  {n:"Electronic Components",t:["APH","GLW","JBL","TEL"]},
+  {n:"Auto Parts",t:["APTV","AZO","GPC","ORLY"]},
+  {n:"Biotechnology",t:["ALNY","INCY","INSM","MRNA","REGN","TECH","VRTX"]},
+  {n:"Drug Manufacturers - Specialty & Generic",t:["VTRS","ZTS"]},
+  {n:"Specialty Industrial Machinery",t:["AME","AOS","CMI","DOV","EMR","ETN","GEV","GNRC","IEX","IR","ITW","NDSN","OTIS","PH","PNR","ROK","XYL"]},
+  {n:"Specialty Chemicals",t:["ALB","APD","DD","ECL","IFF","LIN","LYB","PPG","SHW"]},
+  {n:"Semiconductor Equipment & Materials",t:["AMAT","ASML","KLAC","LRCX","Q","TER"]},
+  {n:"Packaged Foods",t:["CAG","CPB","GIS","HRL","KHC","MKC","SJM"]},
+  {n:"Electrical Equipment & Parts",t:["HUBB","VRT"]},
+  {n:"Engineering & Construction",t:["EME","FER","FIX","J","PWR"]},
+  {n:"Software - Application",t:["ADBE","ADP","ADSK","CDNS","CRM","DDOG","FICO","INTU","MSTR","NOW","PAYX","PTC","ROP","SHOP","TEAM","TYL","UBER","WDAY"]},
+  {n:"Steel",t:["NUE","STLD"]},
+  {n:"Semiconductors",t:["ADI","AMD","ARM","AVGO","INTC","MCHP","MPWR","MRVL","MU","NVDA","NXPI","ON","QCOM","SWKS","TXN"]},
+  {n:"Medical Devices",t:["ABT","BSX","DXCM","EW","GEHC","MDT","PODD","STE","SYK","ZBH"]},
+  {n:"Household & Personal Products",t:["CHD","CL","CLX","EL","KMB","KVUE","PG"]},
+  {n:"Software - Infrastructure",t:["AKAM","CPAY","CRWD","FFIV","FTNT","GDDY","GEN","MSFT","NTAP","ORCL","PANW","PLTR","SNPS","VRSN","XYZ","ZS"]},
+  {n:"Chemicals",t:["DOW"]},
+  {n:"Communication Equipment",t:["CIEN","CSCO","HPE","LITE","MSI","ZBRA"]},
+  {n:"Entertainment",t:["DIS","FOX","FOXA","LYV","NFLX","NWS","NWSA","PSKY","TKO","WBD"]},
+  {n:"Conglomerates",t:["HON","MMM"]},
+  {n:"Information Technology Services",t:["ACN","BR","CDW","CTSH","FIS","IBM","IT","JKHY","LDOS"]},
+  {n:"Capital Markets",t:["GS","HOOD","IBKR","MS","SCHW"]},
+  {n:"Apparel Manufacturing",t:["RL"]},
+  {n:"Aerospace & Defense",t:["AXON","BA","GD","GE","HII","HWM","LHX","LMT","NOC","RTX","TDG","TXT"]},
+  {n:"Electronic Gaming & Multimedia",t:["EA","TTWO"]},
+  {n:"Building Materials",t:["CRH","MLM","VMC"]},
+  {n:"Packaging & Containers",t:["AMCR","AVY","BALL","IP","PKG","SW"]},
+  {n:"Computer Hardware",t:["ANET","DELL","HPQ","SMCI","SNDK","STX","WDC"]},
+  {n:"Diagnostics & Research",t:["A","CRL","DGX","DHR","IDXX","IQV","LH","MTD","RVTY","TMO","WAT"]},
+  {n:"Advertising Agencies",t:["APP","OMC","TTD"]},
+  {n:"Scientific & Technical Instruments",t:["COHR","FTV","GRMN","KEYS","TDY","TRMB"]},
+  {n:"Building Products & Equipment",t:["BLDR","CARR","JCI","LII","MAS","TT"]},
+  {n:"Medical Instruments & Supplies",t:["ALGN","BAX","BDX","COO","ISRG","RMD","SOLV","WST"]},
+  {n:"Consumer Electronics",t:["AAPL"]},
+  {n:"REIT - Diversified",t:["VICI"]},
+  {n:"Tools & Accessories",t:["SNA","SWK"]},
+  {n:"Specialty Business Services",t:["CPRT","CTAS","GPN","TRI"]},
+  {n:"Asset Management",t:["AMP","APO","ARES","BEN","BLK","BX","IVZ","KKR","NTRS","PFG","RJF","STT","TROW"]},
+  {n:"Integrated Freight & Logistics",t:["CHRW","EXPD","FDX","FDXF","JBHT","UPS"]},
+  {n:"Oil & Gas Refining & Marketing",t:["MPC","PSX","VLO"]},
+  {n:"Farm & Heavy Construction Machinery",t:["CAT","DE","PCAR"]},
+  {n:"Footwear & Accessories",t:["DECK","NKE"]},
+  {n:"Confectioners",t:["HSY","MDLZ"]},
+  {n:"Internet Content & Information",t:["GOOG","GOOGL","META"]},
+  {n:"Banks - Regional",t:["CFG","FITB","HBAN","KEY","MTB","PNC","RF","TFC","USB"]},
+  {n:"Utilities - Regulated Gas",t:["ATO","NI"]},
+  {n:"Leisure",t:["HAS"]},
+  {n:"Health Information Services",t:["VEEV"]},
+  {n:"Security & Protection Services",t:["ALLE"]},
+  {n:"Telecom Services",t:["CHTR","CMCSA","SATS","T","TMUS","VZ"]},
+  {n:"Auto Manufacturers",t:["F","GM","TSLA"]},
+  {n:"Agricultural Inputs",t:["CF","CTVA","MOS"]},
+  {n:"Insurance - Property & Casualty",t:["AIZ","ALL","CB","CINF","L","PGR","TRV","WRB"]},
+  {n:"Pollution & Treatment Controls",t:["VLTO"]},
+  {n:"Drug Manufacturers - General",t:["ABBV","AMGN","BIIB","BMY","GILD","JNJ","LLY","MRK","PFE"]},
+  {n:"Industrial Distribution",t:["FAST","GWW","POOL"]},
+  {n:"Airlines",t:["DAL","LUV","UAL"]},
+  {n:"Specialty Retail",t:["BBY","CASY","TSCO","ULTA","WSM"]},
+  {n:"Food Distribution",t:["SYY"]},
+  {n:"REIT - Office",t:["ARE","BXP"]},
+  {n:"Farm Products",t:["ADM","BG","TSN"]},
+  {n:"Internet Retail",t:["AMZN","DASH","EBAY","MELI","PDD"]},
+  {n:"Resorts & Casinos",t:["LVS","MGM","WYNN"]},
+  {n:"Beverages - Brewers",t:["STZ","TAP"]},
+  {n:"Waste Management",t:["RSG","WM"]},
+  {n:"Insurance - Life",t:["AFL","GL","MET","PRU"]},
+  {n:"Railroads",t:["CSX","NSC","UNP","WAB"]},
+  {n:"Apparel Retail",t:["LULU","ROST","TJX"]},
+  {n:"Financial Data & Stock Exchanges",t:["CBOE","CME","COIN","FDS","ICE","MCO","MSCI","NDAQ","SPGI"]},
+  {n:"Solar",t:["FSLR"]},
+  {n:"Consulting Services",t:["EFX","VRSK"]},
+  {n:"Utilities - Regulated Electric",t:["AEE","AEP","CMS","CNP","D","DTE","DUK","ED","EIX","ES","ETR","EVRG","EXC","FE","LNT","NEE","PCG","PEG","PNW","PPL","SO","WEC","XEL"]},
+  {n:"Beverages - Non-Alcoholic",t:["CCEP","KDP","KO","MNST","PEP"]},
+  {n:"Lodging",t:["HLT","MAR"]},
+  {n:"Rental & Leasing Services",t:["URI"]},
+  {n:"Medical Care Facilities",t:["DVA","HCA","UHS"]},
+  {n:"Credit Services",t:["AXP","COF","MA","PYPL","SYF","V"]},
+  {n:"Real Estate Services",t:["CBRE","CSGP"]},
+  {n:"Travel Services",t:["ABNB","BKNG","CCL","EXPE","NCLH","RCL"]},
+  {n:"Auto & Truck Dealerships",t:["CVNA"]},
+  {n:"Copper",t:["FCX"]},
+  {n:"Restaurants",t:["CMG","DPZ","DRI","MCD","SBUX","YUM"]},
+  {n:"REIT - Retail",t:["FRT","KIM","O","REG","SPG"]},
+  {n:"Grocery Stores",t:["KR"]},
+  {n:"Insurance - Diversified",t:["ACGL","AIG","HIG"]},
+  {n:"REIT - Residential",t:["AVB","CPT","EQR","ESS","INVH","MAA","UDR"]},
+  {n:"REIT - Industrial",t:["EXR","PLD","PSA"]},
+  {n:"Discount Stores",t:["COST","DG","DLTR","TGT","WMT"]},
+  {n:"Medical Distribution",t:["CAH","COR","HSIC","MCK"]},
+  {n:"Tobacco",t:["MO","PM"]},
+  {n:"Luxury Goods",t:["TPR"]},
+  {n:"Trucking",t:["ODFL"]},
+  {n:"Insurance - Reinsurance",t:["EG"]}
+];
 
-let closeData={}, allData={}, liveData={}, currentData=null, curFilter='all';
+let closeData={}, allData={}, liveData={}, currentData=null;
 let closeDataLoaded=false;
 let closeDataDateKey=null;
 let currentSubTab='close';
 
 function fmtC(c){if(c==null)return'N/A';const s=c>=0?'+':'';return s+c.toFixed(1)+'%';}
-function fmtV(v){if(!v)return'';if(v>=1e9)return(v/1e9).toFixed(1)+'B';if(v>=1e6)return(v/1e6).toFixed(1)+'M';if(v>=1e3)return(v/1e3).toFixed(0)+'K';return v;}
+function fmtP(p){if(p==null)return'';return'$'+(p>=100?p.toFixed(0):p.toFixed(2));}
 function cls(c){if(c==null)return'fl';return c>0.1?'up':c<-0.1?'dn':'fl';}
-function intensityCls(c){
-  if(c==null)return'';
-  if(c>=10)return'c4'; if(c>=5)return'c3'; if(c>=2)return'c2'; if(c>=0.5)return'c1';
-  if(c<=-5)return'd3'; if(c<=-2)return'd2'; if(c<=-0.5)return'd1';
-  return'';
-}
+
 function sectorAvg(tickers,data){
   data=data||closeData;
   let weightedSum=0,totalWeight=0;
-  tickers.forEach(([s])=>{
+  tickers.forEach(s=>{
     const d=data[s];
     if(d?.change==null)return;
     const weight=(d.volume||0)*(d.price||0);
@@ -257,113 +224,6 @@ function sectorAvg(tickers,data){
     totalWeight+=weight;
   });
   return totalWeight>0?weightedSum/totalWeight:null;
-}
-function sectorDiffusion(tickers,data){
-  data=data||closeData;
-  const vals=tickers.map(([s])=>data[s]?.change).filter(v=>v!=null);
-  if(!vals.length)return null;
-  const up=vals.filter(v=>v>0).length;
-  return {up, total:vals.length};
-}
-
-function renderDashboard(data, gridId, leadId){
-  data=data||closeData; gridId=gridId||'top5Grid'; leadId=leadId||'leadersGrid';
-  const avgs=SECTORS.map(s=>({n:s.n,avg:sectorAvg(s.t,data),full:s.n}))
-    .filter(x=>x.avg!=null).sort((a,b)=>b.avg-a.avg);
-  const maxAvg=Math.max(...avgs.map(x=>Math.abs(x.avg)),1);
-
-  document.getElementById(gridId).innerHTML=avgs.map((x,i)=>{
-    const cc=x.avg>0?'up':'dn';
-    const sign=x.avg>=0?'+':'';
-    const w=Math.max(4,Math.min(100,Math.abs(x.avg)/maxAvg*100));
-    const diff=sectorDiffusion(SECTORS.find(s=>s.n===x.full).t,data);
-    const rankLabel=i<3?['🥇','🥈','🥉'][i]:`${i+1}위`;
-    const barColor=x.avg>0?'linear-gradient(90deg,#ff4d67,#ff8c42)':'linear-gradient(90deg,#2b95ff,#5c7cff)';
-    return `<div class="top5-item" onclick="scrollToSector('${x.full}')">
-      <div class="top5-flow">
-        <div class="top5-head">
-          <div class="top5-left">
-            <span class="top5-medal">${rankLabel}</span>
-            <span class="top5-name">${x.n}</span>
-          </div>
-          <div style="display:flex;align-items:center;gap:6px;">
-            <span class="top5-val ${cc}">${sign}${x.avg.toFixed(1)}%</span>
-            <span style="font-size:11px;font-weight:700;color:#6e7d98;">${diff?diff.up+'/'+diff.total:''}</span>
-          </div>
-        </div>
-        <div class="top5-bar-wrap"><div class="top5-bar" style="width:${w}%;background:${barColor}"></div></div>
-      </div>
-    </div>`;
-  }).join('');
-
-  const allTickers=[];
-  SECTORS.forEach(s=>s.t.forEach(([sym,desc,kr])=>{
-    const d=data[sym];
-    if(d?.change!=null)allTickers.push({sym,kr,change:d.change,sec:s.n});
-  }));
-  const leaders=allTickers.sort((a,b)=>b.change-a.change).slice(0,10);
-  const hero=leaders[0];
-  const rest=leaders.slice(1,10);
-  document.getElementById(leadId).innerHTML=hero?`
-    <div class="leader-hero">
-      <div class="leader-hero-label">오늘의 1등</div>
-      <div class="leader-hero-sym">${hero.sym} <span style="font-size:15px;font-weight:700;color:#8fa0bd;">${hero.sec}</span></div>
-      <div class="leader-hero-chg">${fmtC(hero.change)}</div>
-    </div>
-    <div class="leader-list">
-      ${rest.map((x,i)=>`<div class="leader-item ${intensityCls(x.change)}">
-        <span class="leader-rank">${i+2}</span>
-        <span class="leader-sym">${x.sym} <span style="font-weight:700;color:#8fa0bd;">${x.sec}</span></span>
-        <span class="leader-chg ${cls(x.change)}">${fmtC(x.change)}</span>
-      </div>`).join('')}
-    </div>`:'';
-}
-
-function scrollToSector(name){
-  const el=document.getElementById('sc-'+name.replace(/[^a-zA-Z0-9]/g,'_'));
-  if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
-}
-
-function renderMain(data){
-  data=data||currentData||closeData;
-  document.getElementById('main').innerHTML=SECTORS.map(s=>{
-    const avg=sectorAvg(s.t,data);
-    if(curFilter==='up'&&(avg==null||avg<=0))return'';
-    if(curFilter==='dn'&&(avg==null||avg>=0))return'';
-    if(!['all','up','dn'].includes(curFilter)&&!s.grp.includes(curFilter))return'';
-    const avgC=cls(avg);
-    const sign=avg!=null&&avg>=0?'+':'';
-    const id='sc-'+s.n.replace(/[^a-zA-Z0-9]/g,'_');
-    const rows=s.t.map(([sym,desc,kr])=>{
-      const d=data[sym];
-      const c=d?.change, p=d?.price, v=d?.volume;
-      const pStr=p!=null?'$'+p.toFixed(p>100?0:2):'';
-      return `<div class="tk ${intensityCls(c)}">
-        <div class="tk-top"><span class="tk-sym">${sym}</span><span class="tk-chg ${cls(c)}">${fmtC(c)}</span></div>
-        <span class="tk-desc">${desc}</span>
-        <div class="tk-vol"><span>${pStr}</span><span>${fmtV(v)}</span></div>
-      </div>`;
-    }).join('');
-    return `<div class="sc" id="${id}">
-      <div class="sc-hdr"><span class="sc-name">${s.n}</span><span class="sc-avg ${avgC}">${avg!=null?sign+avg.toFixed(1)+'%':'N/A'}</span></div>
-      <div class="tk-grid">${rows}</div>
-    </div>`;
-  }).join('');
-}
-
-function setFilter(f,btn){
-  curFilter=f;
-  document.querySelectorAll('.ftab').forEach(t=>t.classList.remove('active'));
-  btn.classList.add('active');
-  renderMain();
-}
-
-function setSubTab(type,btn){
-  currentSubTab=type;
-  document.querySelectorAll('.sub-tab').forEach(t=>t.classList.remove('active'));
-  btn.classList.add('active');
-  currentData=(type==='live')?liveData:closeData;
-  renderMain(currentData);
 }
 
 function buildCloseData(data){
@@ -382,6 +242,60 @@ function buildLiveData(data){
     out[sym]={price:d.live_price??d.price,change:d.live_change??d.change,volume:d.volume,live_price:d.live_price,live_change:d.live_change};
   });
   return out;
+}
+
+let sortedSectors=[];
+
+function renderMain(data){
+  data=data||currentData||closeData;
+  const avgs=SECTORS.map(s=>({...s,avg:sectorAvg(s.t,data)}))
+    .sort((a,b)=>{
+      if(a.avg==null&&b.avg==null)return 0;
+      if(a.avg==null)return 1;
+      if(b.avg==null)return -1;
+      return b.avg-a.avg;
+    });
+  sortedSectors=avgs;
+
+  const cardsHtml=avgs.map(s=>{
+    const sign=s.avg!=null&&s.avg>=0?'+':'';
+    const avgC=cls(s.avg);
+    const rows=s.t.map(sym=>{
+      const d=data[sym];
+      const c=d?.change, p=d?.price, lp=d?.live_price;
+      if(p==null)return`<tr><td>${sym}</td><td colspan="3" style="color:#3a4a68;">데이터없음</td></tr>`;
+      return `<tr>
+        <td>${sym}</td>
+        <td>${fmtP(p)}</td>
+        <td>${fmtP(lp??p)}</td>
+        <td class="${cls(c)}">${fmtC(c)}</td>
+      </tr>`;
+    }).join('');
+    return `<div class="sc" data-name="${s.n}">
+      <div class="sc-hdr"><span class="sc-name">${s.n}</span><span class="sc-avg ${avgC}">${s.avg!=null?sign+s.avg.toFixed(1)+'%':'N/A'}</span></div>
+      <div class="sc-perf">${s.t.length}개 종목</div>
+      <table>
+        <tr class="col-header"><td>종목명</td><td>전일종가</td><td>현재가</td><td>등락률</td></tr>
+        ${rows}
+      </table>
+    </div>`;
+  }).join('');
+
+  // 신문 칼럼 분배 (4열)
+  const tmp=document.createElement('div');
+  tmp.innerHTML=cardsHtml;
+  const cardEls=Array.from(tmp.children);
+  const grid=document.getElementById('grid');
+  grid.innerHTML='';
+  const numCols=4;
+  const cols=[];
+  for(let i=0;i<numCols;i++){
+    const c=document.createElement('div');
+    c.className='col';
+    grid.appendChild(c);
+    cols.push(c);
+  }
+  cardEls.forEach((el,i)=>cols[i%numCols].appendChild(el));
 }
 
 async function fetchAll(syms){
@@ -405,51 +319,6 @@ async function fetchAll(syms){
   return res;
 }
 
-async function loadData(){
-  const ov=document.getElementById('ov');
-  const btn=document.getElementById('refBtn');
-  ov.classList.remove('hidden');
-  btn.classList.add('loading');
-  try{
-    const syms=[...new Set(SECTORS.flatMap(s=>s.t.map(t=>t[0])))];
-    allData=await fetchAll(syms);
-    const dateKey=getUsCloseDate();
-    if(!closeDataLoaded || closeDataDateKey!==dateKey){
-      closeData=buildCloseData(allData);
-      closeDataLoaded=true;
-      closeDataDateKey=dateKey;
-    }
-    liveData=buildLiveData(allData);
-    currentData=(currentSubTab==='live')?liveData:closeData;
-    const ok=Object.values(allData).filter(v=>v).length;
-    document.getElementById('hdrSub').textContent=`28섹터 · ${ok}개 수집완료`;
-    document.getElementById('dateDisplay').textContent=closeDataDateKey+' 종가';
-    document.getElementById('footer').textContent=`업데이트: ${new Date().toLocaleString('ko-KR')} | ${ok}/${syms.length}개`;
-    renderDashboard(closeData,'top5Grid','leadersGrid');
-    renderDashboard(liveData,'top5GridLive','leadersGridLive');
-    renderMain(currentData);
-  }catch(e){alert('오류: '+e.message);}
-  finally{
-    setTimeout(()=>ov.classList.add('hidden'),300);
-    btn.classList.remove('loading');
-  }
-}
-
-function downloadCSV(){
-  const rows=[['날짜','섹터','티커','설명','등락률%','거래량','가격']];
-  const today=closeDataDateKey||getUsCloseDate();
-  SECTORS.forEach(s=>s.t.forEach(([sym,desc])=>{
-    const d=closeData[sym];
-    rows.push([today,s.n,sym,desc,d?.change!=null?d.change.toFixed(2):'',d?.volume||'',d?.price!=null?d.price.toFixed(2):'']);
-  }));
-  const csv=rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
-  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download=`us_radar_${new Date().toISOString().slice(0,10)}.csv`;
-  a.click();
-}
-
 function isUsDST(date){
   const year=date.getUTCFullYear();
   const mar=new Date(Date.UTC(year,2,1));
@@ -471,6 +340,68 @@ function getUsCloseDate(now=new Date()){
   if(dow===0)kst.setUTCDate(kst.getUTCDate()-2);
   if(dow===6)kst.setUTCDate(kst.getUTCDate()-1);
   return kst.toISOString().slice(0,10);
+}
+
+function setSubTab(type,btn){
+  currentSubTab=type;
+  document.querySelectorAll('.sub-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  currentData=(type==='live')?liveData:closeData;
+  renderMain(currentData);
+}
+
+async function loadData(){
+  const ov=document.getElementById('ov');
+  const btn=document.getElementById('refBtn');
+  ov.classList.remove('hidden');
+  btn.classList.add('loading');
+  try{
+    const syms=[...new Set(SECTORS.flatMap(s=>s.t))];
+    allData=await fetchAll(syms);
+    const dateKey=getUsCloseDate();
+    if(!closeDataLoaded || closeDataDateKey!==dateKey){
+      closeData=buildCloseData(allData);
+      closeDataLoaded=true;
+      closeDataDateKey=dateKey;
+    }
+    liveData=buildLiveData(allData);
+    currentData=(currentSubTab==='live')?liveData:closeData;
+    const ok=Object.values(allData).filter(v=>v).length;
+    document.getElementById('hdrSub').textContent=`93개 industry · ${ok}개 종목 수집완료`;
+    document.getElementById('dateDisplay').textContent=closeDataDateKey+' 종가';
+    document.getElementById('footer').textContent=`업데이트: ${new Date().toLocaleString('ko-KR')} | ${ok}/${syms.length}개`;
+    renderMain(currentData);
+  }catch(e){alert('오류: '+e.message);}
+  finally{
+    setTimeout(()=>ov.classList.add('hidden'),300);
+    btn.classList.remove('loading');
+  }
+}
+
+function downloadCSV(){
+  const rows=[['날짜','순위','industry','industry등락률%','종목','전일종가','현재가','등락률%','거래량']];
+  const today=closeDataDateKey||getUsCloseDate();
+  const list=sortedSectors.length?sortedSectors:SECTORS;
+  list.forEach((s,idx)=>s.t.forEach(sym=>{
+    const d=closeData[sym];
+    rows.push([
+      today,
+      idx+1,
+      s.n,
+      s.avg!=null?s.avg.toFixed(2):'',
+      sym,
+      d?.price!=null?d.price.toFixed(2):'',
+      d?.live_price!=null?d.live_price.toFixed(2):'',
+      d?.change!=null?d.change.toFixed(2):'',
+      d?.volume||''
+    ]);
+  }));
+  const csv=rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`us_radar_gics_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
 }
 
 loadData();

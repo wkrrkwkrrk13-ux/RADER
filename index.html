@@ -43,22 +43,25 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'Malgun Go
 .sub-tab{padding:5px 14px;border-radius:8px;font-size:11px;font-weight:900;background:var(--surface2);border:1px solid var(--border);color:#9aa7c4;cursor:pointer;}
 .sub-tab.active{background:rgba(247,200,74,0.15);border-color:rgba(247,200,74,0.4);color:var(--accent);}
 
-.main{padding:10px;}
-.grid{display:flex;gap:6px;align-items:flex-start;}
-.col{flex:1;display:flex;flex-direction:column;gap:6px;min-width:0;}
+.main{padding:8px;}
+.grid{display:flex;gap:5px;align-items:flex-start;}
+.col{flex:1;display:flex;flex-direction:column;gap:5px;min-width:0;}
 
 .sc{background:#0c1627;border:2px solid #2e4a72;border-radius:8px;overflow:hidden;box-shadow:0 0 0 1px #1a2e4a;}
-.sc-hdr{padding:6px 10px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(90deg,#1a3a5c 0%,#0f2040 100%);border-bottom:2px solid #2e4a72;gap:6px;}
+.sc-hdr{padding:6px 9px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(90deg,#1a3a5c 0%,#0f2040 100%);border-bottom:2px solid #2e4a72;gap:6px;}
+.sc-name-wrap{display:flex;flex-direction:column;min-width:0;overflow:hidden;}
 .sc-name{font-size:12px;font-weight:950;color:#fff;letter-spacing:-0.2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.sc-avg{font-size:14px;font-weight:950;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:-0.5px;flex-shrink:0;}
-.sc-perf{padding:3px 10px;font-size:9px;color:#fff;background:#080f1e;border-bottom:1px solid #151f33;}
+.sc-name-kr{font-size:10px;font-weight:800;color:#9fc4ee;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sc-right{display:flex;flex-direction:column;align-items:flex-end;flex-shrink:0;}
+.sc-avg{font-size:15px;font-weight:950;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:-0.5px;line-height:1.1;}
+.sc-vol{font-size:9px;font-weight:800;color:#9aa7c4;}
 
 table{width:100%;border-collapse:collapse;}
-.col-header td{color:#fff;font-size:8px;font-weight:900;border-bottom:1px solid #1a2a40;padding:2px 6px;}
-td{padding:2px 6px;border-bottom:1px solid #0e1a2e;font-size:10px;line-height:1.5;white-space:nowrap;}
-td:first-child{overflow:hidden;text-overflow:ellipsis;}
-td:nth-child(2),td:nth-child(3){text-align:right;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;width:60px;}
-td:nth-child(4){text-align:right;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:900;width:54px;}
+.col-header td{color:#fff;font-size:9px;font-weight:900;border-bottom:1px solid #1a2a40;padding:2px 4px;}
+td{padding:3px 4px;border-bottom:1px solid #0e1a2e;font-size:12px;font-weight:700;line-height:1.3;white-space:nowrap;}
+td:first-child{overflow:hidden;text-overflow:ellipsis;font-weight:900;}
+td:nth-child(2),td:nth-child(3){text-align:right;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;width:52px;}
+td:nth-child(4){text-align:right;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:950;width:48px;}
 .up{color:var(--up)!important;} .dn{color:var(--down)!important;} .fl{color:#9aa7c4!important;}
 .empty{color:#2a3a52;text-align:center;padding:8px;font-size:9px;}
 
@@ -68,10 +71,6 @@ td:nth-child(4){text-align:right;font-family:ui-monospace,SFMono-Regular,Menlo,m
 @keyframes spin{to{transform:rotate(360deg);}}
 .spin-txt{font-size:12px;font-weight:800;color:var(--accent);}
 .footer{text-align:center;font-size:10px;color:var(--muted);padding:10px;border-top:1px solid var(--border);background:var(--surface);}
-@media(max-width:900px){
-  .grid{flex-direction:column;}
-  .col{flex:none;}
-}
 </style>
 </head>
 <body>
@@ -108,99 +107,99 @@ td:nth-child(4){text-align:right;font-family:ui-monospace,SFMono-Regular,Menlo,m
 
 <script>
 const SECTORS=[
-  {n:"Electronic Components",t:["APH","GLW","JBL","TEL"]},
-  {n:"Auto Parts",t:["APTV","AZO","GPC","ORLY"]},
-  {n:"Biotechnology",t:["ALNY","INCY","INSM","MRNA","REGN","TECH","VRTX"]},
-  {n:"Drug Manufacturers - Specialty & Generic",t:["VTRS","ZTS"]},
-  {n:"Specialty Industrial Machinery",t:["AME","AOS","CMI","DOV","EMR","ETN","GEV","GNRC","IEX","IR","ITW","NDSN","OTIS","PH","PNR","ROK","XYL"]},
-  {n:"Specialty Chemicals",t:["ALB","APD","DD","ECL","IFF","LIN","LYB","PPG","SHW"]},
-  {n:"Semiconductor Equipment & Materials",t:["AMAT","ASML","KLAC","LRCX","Q","TER"]},
-  {n:"Packaged Foods",t:["CAG","CPB","GIS","HRL","KHC","MKC","SJM"]},
-  {n:"Electrical Equipment & Parts",t:["HUBB","VRT"]},
-  {n:"Engineering & Construction",t:["EME","FER","FIX","J","PWR"]},
-  {n:"Software - Application",t:["ADBE","ADP","ADSK","CDNS","CRM","DDOG","FICO","INTU","MSTR","NOW","PAYX","PTC","ROP","SHOP","TEAM","TYL","UBER","WDAY"]},
-  {n:"Steel",t:["NUE","STLD"]},
-  {n:"Semiconductors",t:["ADI","AMD","ARM","AVGO","INTC","MCHP","MPWR","MRVL","MU","NVDA","NXPI","ON","QCOM","SWKS","TXN"]},
-  {n:"Medical Devices",t:["ABT","BSX","DXCM","EW","GEHC","MDT","PODD","STE","SYK","ZBH"]},
-  {n:"Household & Personal Products",t:["CHD","CL","CLX","EL","KMB","KVUE","PG"]},
-  {n:"Software - Infrastructure",t:["AKAM","CPAY","CRWD","FFIV","FTNT","GDDY","GEN","MSFT","NTAP","ORCL","PANW","PLTR","SNPS","VRSN","XYZ","ZS"]},
-  {n:"Chemicals",t:["DOW"]},
-  {n:"Communication Equipment",t:["CIEN","CSCO","HPE","LITE","MSI","ZBRA"]},
-  {n:"Entertainment",t:["DIS","FOX","FOXA","LYV","NFLX","NWS","NWSA","PSKY","TKO","WBD"]},
-  {n:"Conglomerates",t:["HON","MMM"]},
-  {n:"Information Technology Services",t:["ACN","BR","CDW","CTSH","FIS","IBM","IT","JKHY","LDOS"]},
-  {n:"Capital Markets",t:["GS","HOOD","IBKR","MS","SCHW"]},
-  {n:"Apparel Manufacturing",t:["RL"]},
-  {n:"Aerospace & Defense",t:["AXON","BA","GD","GE","HII","HWM","LHX","LMT","NOC","RTX","TDG","TXT"]},
-  {n:"Electronic Gaming & Multimedia",t:["EA","TTWO"]},
-  {n:"Building Materials",t:["CRH","MLM","VMC"]},
-  {n:"Packaging & Containers",t:["AMCR","AVY","BALL","IP","PKG","SW"]},
-  {n:"Computer Hardware",t:["ANET","DELL","HPQ","SMCI","SNDK","STX","WDC"]},
-  {n:"Diagnostics & Research",t:["A","CRL","DGX","DHR","IDXX","IQV","LH","MTD","RVTY","TMO","WAT"]},
-  {n:"Advertising Agencies",t:["APP","OMC","TTD"]},
-  {n:"Scientific & Technical Instruments",t:["COHR","FTV","GRMN","KEYS","TDY","TRMB"]},
-  {n:"Building Products & Equipment",t:["BLDR","CARR","JCI","LII","MAS","TT"]},
-  {n:"Medical Instruments & Supplies",t:["ALGN","BAX","BDX","COO","ISRG","RMD","SOLV","WST"]},
-  {n:"Consumer Electronics",t:["AAPL"]},
-  {n:"REIT - Diversified",t:["VICI"]},
-  {n:"Tools & Accessories",t:["SNA","SWK"]},
-  {n:"Specialty Business Services",t:["CPRT","CTAS","GPN","TRI"]},
-  {n:"Asset Management",t:["AMP","APO","ARES","BEN","BLK","BX","IVZ","KKR","NTRS","PFG","RJF","STT","TROW"]},
-  {n:"Integrated Freight & Logistics",t:["CHRW","EXPD","FDX","FDXF","JBHT","UPS"]},
-  {n:"Oil & Gas Refining & Marketing",t:["MPC","PSX","VLO"]},
-  {n:"Farm & Heavy Construction Machinery",t:["CAT","DE","PCAR"]},
-  {n:"Footwear & Accessories",t:["DECK","NKE"]},
-  {n:"Confectioners",t:["HSY","MDLZ"]},
-  {n:"Internet Content & Information",t:["GOOG","GOOGL","META"]},
-  {n:"Banks - Regional",t:["CFG","FITB","HBAN","KEY","MTB","PNC","RF","TFC","USB"]},
-  {n:"Utilities - Regulated Gas",t:["ATO","NI"]},
-  {n:"Leisure",t:["HAS"]},
-  {n:"Health Information Services",t:["VEEV"]},
-  {n:"Security & Protection Services",t:["ALLE"]},
-  {n:"Telecom Services",t:["CHTR","CMCSA","SATS","T","TMUS","VZ"]},
-  {n:"Auto Manufacturers",t:["F","GM","TSLA"]},
-  {n:"Agricultural Inputs",t:["CF","CTVA","MOS"]},
-  {n:"Insurance - Property & Casualty",t:["AIZ","ALL","CB","CINF","L","PGR","TRV","WRB"]},
-  {n:"Pollution & Treatment Controls",t:["VLTO"]},
-  {n:"Drug Manufacturers - General",t:["ABBV","AMGN","BIIB","BMY","GILD","JNJ","LLY","MRK","PFE"]},
-  {n:"Industrial Distribution",t:["FAST","GWW","POOL"]},
-  {n:"Airlines",t:["DAL","LUV","UAL"]},
-  {n:"Specialty Retail",t:["BBY","CASY","TSCO","ULTA","WSM"]},
-  {n:"Food Distribution",t:["SYY"]},
-  {n:"REIT - Office",t:["ARE","BXP"]},
-  {n:"Farm Products",t:["ADM","BG","TSN"]},
-  {n:"Internet Retail",t:["AMZN","DASH","EBAY","MELI","PDD"]},
-  {n:"Resorts & Casinos",t:["LVS","MGM","WYNN"]},
-  {n:"Beverages - Brewers",t:["STZ","TAP"]},
-  {n:"Waste Management",t:["RSG","WM"]},
-  {n:"Insurance - Life",t:["AFL","GL","MET","PRU"]},
-  {n:"Railroads",t:["CSX","NSC","UNP","WAB"]},
-  {n:"Apparel Retail",t:["LULU","ROST","TJX"]},
-  {n:"Financial Data & Stock Exchanges",t:["CBOE","CME","COIN","FDS","ICE","MCO","MSCI","NDAQ","SPGI"]},
-  {n:"Solar",t:["FSLR"]},
-  {n:"Consulting Services",t:["EFX","VRSK"]},
-  {n:"Utilities - Regulated Electric",t:["AEE","AEP","CMS","CNP","D","DTE","DUK","ED","EIX","ES","ETR","EVRG","EXC","FE","LNT","NEE","PCG","PEG","PNW","PPL","SO","WEC","XEL"]},
-  {n:"Beverages - Non-Alcoholic",t:["CCEP","KDP","KO","MNST","PEP"]},
-  {n:"Lodging",t:["HLT","MAR"]},
-  {n:"Rental & Leasing Services",t:["URI"]},
-  {n:"Medical Care Facilities",t:["DVA","HCA","UHS"]},
-  {n:"Credit Services",t:["AXP","COF","MA","PYPL","SYF","V"]},
-  {n:"Real Estate Services",t:["CBRE","CSGP"]},
-  {n:"Travel Services",t:["ABNB","BKNG","CCL","EXPE","NCLH","RCL"]},
-  {n:"Auto & Truck Dealerships",t:["CVNA"]},
-  {n:"Copper",t:["FCX"]},
-  {n:"Restaurants",t:["CMG","DPZ","DRI","MCD","SBUX","YUM"]},
-  {n:"REIT - Retail",t:["FRT","KIM","O","REG","SPG"]},
-  {n:"Grocery Stores",t:["KR"]},
-  {n:"Insurance - Diversified",t:["ACGL","AIG","HIG"]},
-  {n:"REIT - Residential",t:["AVB","CPT","EQR","ESS","INVH","MAA","UDR"]},
-  {n:"REIT - Industrial",t:["EXR","PLD","PSA"]},
-  {n:"Discount Stores",t:["COST","DG","DLTR","TGT","WMT"]},
-  {n:"Medical Distribution",t:["CAH","COR","HSIC","MCK"]},
-  {n:"Tobacco",t:["MO","PM"]},
-  {n:"Luxury Goods",t:["TPR"]},
-  {n:"Trucking",t:["ODFL"]},
-  {n:"Insurance - Reinsurance",t:["EG"]}
+  {n:"Electronic Components",kr:"전자부품",t:["APH","GLW","JBL","TEL"]},
+  {n:"Auto Parts",kr:"자동차부품",t:["APTV","AZO","GPC","ORLY"]},
+  {n:"Biotechnology",kr:"바이오테크",t:["ALNY","INCY","INSM","MRNA","REGN","TECH","VRTX"]},
+  {n:"Drug Manufacturers - Specialty & Generic",kr:"특수/제네릭 제약",t:["VTRS","ZTS"]},
+  {n:"Specialty Industrial Machinery",kr:"특수산업기계",t:["AME","AOS","CMI","DOV","EMR","ETN","GEV","GNRC","IEX","IR","ITW","NDSN","OTIS","PH","PNR","ROK","XYL"]},
+  {n:"Specialty Chemicals",kr:"특수화학",t:["ALB","APD","DD","ECL","IFF","LIN","LYB","PPG","SHW"]},
+  {n:"Semiconductor Equipment & Materials",kr:"반도체장비/소재",t:["AMAT","ASML","KLAC","LRCX","Q","TER"]},
+  {n:"Packaged Foods",kr:"가공식품",t:["CAG","CPB","GIS","HRL","KHC","MKC","SJM"]},
+  {n:"Electrical Equipment & Parts",kr:"전력설비/부품",t:["HUBB","VRT"]},
+  {n:"Engineering & Construction",kr:"엔지니어링/건설",t:["EME","FER","FIX","J","PWR"]},
+  {n:"Software - Application",kr:"응용소프트웨어",t:["ADBE","ADP","ADSK","CDNS","CRM","DDOG","FICO","INTU","MSTR","NOW","PAYX","PTC","ROP","SHOP","TEAM","TYL","UBER","WDAY"]},
+  {n:"Steel",kr:"철강",t:["NUE","STLD"]},
+  {n:"Semiconductors",kr:"반도체",t:["ADI","AMD","ARM","AVGO","INTC","MCHP","MPWR","MRVL","MU","NVDA","NXPI","ON","QCOM","SWKS","TXN"]},
+  {n:"Medical Devices",kr:"의료기기",t:["ABT","BSX","DXCM","EW","GEHC","MDT","PODD","STE","SYK","ZBH"]},
+  {n:"Household & Personal Products",kr:"생활용품",t:["CHD","CL","CLX","EL","KMB","KVUE","PG"]},
+  {n:"Software - Infrastructure",kr:"인프라소프트웨어",t:["AKAM","CPAY","CRWD","FFIV","FTNT","GDDY","GEN","MSFT","NTAP","ORCL","PANW","PLTR","SNPS","VRSN","XYZ","ZS"]},
+  {n:"Chemicals",kr:"화학",t:["DOW"]},
+  {n:"Communication Equipment",kr:"통신장비",t:["CIEN","CSCO","HPE","LITE","MSI","ZBRA"]},
+  {n:"Entertainment",kr:"엔터테인먼트",t:["DIS","FOX","FOXA","LYV","NFLX","NWS","NWSA","PSKY","TKO","WBD"]},
+  {n:"Conglomerates",kr:"복합기업",t:["HON","MMM"]},
+  {n:"Information Technology Services",kr:"IT서비스",t:["ACN","BR","CDW","CTSH","FIS","IBM","IT","JKHY","LDOS"]},
+  {n:"Capital Markets",kr:"증권/자본시장",t:["GS","HOOD","IBKR","MS","SCHW"]},
+  {n:"Apparel Manufacturing",kr:"의류제조",t:["RL"]},
+  {n:"Aerospace & Defense",kr:"항공우주/방산",t:["AXON","BA","GD","GE","HII","HWM","LHX","LMT","NOC","RTX","TDG","TXT"]},
+  {n:"Electronic Gaming & Multimedia",kr:"게임/멀티미디어",t:["EA","TTWO"]},
+  {n:"Building Materials",kr:"건축자재",t:["CRH","MLM","VMC"]},
+  {n:"Packaging & Containers",kr:"포장/용기",t:["AMCR","AVY","BALL","IP","PKG","SW"]},
+  {n:"Computer Hardware",kr:"컴퓨터하드웨어",t:["ANET","DELL","HPQ","SMCI","SNDK","STX","WDC"]},
+  {n:"Diagnostics & Research",kr:"진단/연구",t:["A","CRL","DGX","DHR","IDXX","IQV","LH","MTD","RVTY","TMO","WAT"]},
+  {n:"Advertising Agencies",kr:"광고대행",t:["APP","OMC","TTD"]},
+  {n:"Scientific & Technical Instruments",kr:"정밀계측기기",t:["COHR","FTV","GRMN","KEYS","TDY","TRMB"]},
+  {n:"Building Products & Equipment",kr:"건축자재/설비",t:["BLDR","CARR","JCI","LII","MAS","TT"]},
+  {n:"Medical Instruments & Supplies",kr:"의료기구/소모품",t:["ALGN","BAX","BDX","COO","ISRG","RMD","SOLV","WST"]},
+  {n:"Consumer Electronics",kr:"가전",t:["AAPL"]},
+  {n:"REIT - Diversified",kr:"리츠(복합)",t:["VICI"]},
+  {n:"Tools & Accessories",kr:"공구/액세서리",t:["SNA","SWK"]},
+  {n:"Specialty Business Services",kr:"전문비즈니스서비스",t:["CPRT","CTAS","GPN","TRI"]},
+  {n:"Asset Management",kr:"자산운용",t:["AMP","APO","ARES","BEN","BLK","BX","IVZ","KKR","NTRS","PFG","RJF","STT","TROW"]},
+  {n:"Integrated Freight & Logistics",kr:"물류/운송",t:["CHRW","EXPD","FDX","FDXF","JBHT","UPS"]},
+  {n:"Oil & Gas Refining & Marketing",kr:"정유/석유유통",t:["MPC","PSX","VLO"]},
+  {n:"Farm & Heavy Construction Machinery",kr:"농기계/건설중장비",t:["CAT","DE","PCAR"]},
+  {n:"Footwear & Accessories",kr:"신발/액세서리",t:["DECK","NKE"]},
+  {n:"Confectioners",kr:"제과",t:["HSY","MDLZ"]},
+  {n:"Internet Content & Information",kr:"인터넷콘텐츠",t:["GOOG","GOOGL","META"]},
+  {n:"Banks - Regional",kr:"지방은행",t:["CFG","FITB","HBAN","KEY","MTB","PNC","RF","TFC","USB"]},
+  {n:"Utilities - Regulated Gas",kr:"가스유틸리티",t:["ATO","NI"]},
+  {n:"Leisure",kr:"레저",t:["HAS"]},
+  {n:"Health Information Services",kr:"헬스케어정보서비스",t:["VEEV"]},
+  {n:"Security & Protection Services",kr:"보안서비스",t:["ALLE"]},
+  {n:"Telecom Services",kr:"통신서비스",t:["CHTR","CMCSA","SATS","T","TMUS","VZ"]},
+  {n:"Auto Manufacturers",kr:"완성차",t:["F","GM","TSLA"]},
+  {n:"Agricultural Inputs",kr:"농업투입재",t:["CF","CTVA","MOS"]},
+  {n:"Insurance - Property & Casualty",kr:"손해보험",t:["AIZ","ALL","CB","CINF","L","PGR","TRV","WRB"]},
+  {n:"Pollution & Treatment Controls",kr:"환경처리설비",t:["VLTO"]},
+  {n:"Drug Manufacturers - General",kr:"일반제약",t:["ABBV","AMGN","BIIB","BMY","GILD","JNJ","LLY","MRK","PFE"]},
+  {n:"Industrial Distribution",kr:"산업유통",t:["FAST","GWW","POOL"]},
+  {n:"Airlines",kr:"항공",t:["DAL","LUV","UAL"]},
+  {n:"Specialty Retail",kr:"전문유통",t:["BBY","CASY","TSCO","ULTA","WSM"]},
+  {n:"Food Distribution",kr:"식품유통",t:["SYY"]},
+  {n:"REIT - Office",kr:"리츠(오피스)",t:["ARE","BXP"]},
+  {n:"Farm Products",kr:"농산물",t:["ADM","BG","TSN"]},
+  {n:"Internet Retail",kr:"온라인유통",t:["AMZN","DASH","EBAY","MELI","PDD"]},
+  {n:"Resorts & Casinos",kr:"리조트/카지노",t:["LVS","MGM","WYNN"]},
+  {n:"Beverages - Brewers",kr:"주류(맥주)",t:["STZ","TAP"]},
+  {n:"Waste Management",kr:"폐기물관리",t:["RSG","WM"]},
+  {n:"Insurance - Life",kr:"생명보험",t:["AFL","GL","MET","PRU"]},
+  {n:"Railroads",kr:"철도",t:["CSX","NSC","UNP","WAB"]},
+  {n:"Apparel Retail",kr:"의류유통",t:["LULU","ROST","TJX"]},
+  {n:"Financial Data & Stock Exchanges",kr:"금융데이터/거래소",t:["CBOE","CME","COIN","FDS","ICE","MCO","MSCI","NDAQ","SPGI"]},
+  {n:"Solar",kr:"태양광",t:["FSLR"]},
+  {n:"Consulting Services",kr:"컨설팅",t:["EFX","VRSK"]},
+  {n:"Utilities - Regulated Electric",kr:"전력유틸리티",t:["AEE","AEP","CMS","CNP","D","DTE","DUK","ED","EIX","ES","ETR","EVRG","EXC","FE","LNT","NEE","PCG","PEG","PNW","PPL","SO","WEC","XEL"]},
+  {n:"Beverages - Non-Alcoholic",kr:"음료(비알콜)",t:["CCEP","KDP","KO","MNST","PEP"]},
+  {n:"Lodging",kr:"숙박",t:["HLT","MAR"]},
+  {n:"Rental & Leasing Services",kr:"렌탈/리스",t:["URI"]},
+  {n:"Medical Care Facilities",kr:"의료시설",t:["DVA","HCA","UHS"]},
+  {n:"Credit Services",kr:"신용/결제서비스",t:["AXP","COF","MA","PYPL","SYF","V"]},
+  {n:"Real Estate Services",kr:"부동산서비스",t:["CBRE","CSGP"]},
+  {n:"Travel Services",kr:"여행서비스",t:["ABNB","BKNG","CCL","EXPE","NCLH","RCL"]},
+  {n:"Auto & Truck Dealerships",kr:"자동차딜러",t:["CVNA"]},
+  {n:"Copper",kr:"구리",t:["FCX"]},
+  {n:"Restaurants",kr:"외식",t:["CMG","DPZ","DRI","MCD","SBUX","YUM"]},
+  {n:"REIT - Retail",kr:"리츠(리테일)",t:["FRT","KIM","O","REG","SPG"]},
+  {n:"Grocery Stores",kr:"식료품점",t:["KR"]},
+  {n:"Insurance - Diversified",kr:"종합보험",t:["ACGL","AIG","HIG"]},
+  {n:"REIT - Residential",kr:"리츠(주거)",t:["AVB","CPT","EQR","ESS","INVH","MAA","UDR"]},
+  {n:"REIT - Industrial",kr:"리츠(산업)",t:["EXR","PLD","PSA"]},
+  {n:"Discount Stores",kr:"할인점",t:["COST","DG","DLTR","TGT","WMT"]},
+  {n:"Medical Distribution",kr:"의약품유통",t:["CAH","COR","HSIC","MCK"]},
+  {n:"Tobacco",kr:"담배",t:["MO","PM"]},
+  {n:"Luxury Goods",kr:"명품",t:["TPR"]},
+  {n:"Trucking",kr:"화물운송",t:["ODFL"]},
+  {n:"Insurance - Reinsurance",kr:"재보험",t:["EG"]}
 ];
 
 let closeData={}, allData={}, liveData={}, currentData=null;
@@ -246,6 +245,30 @@ function buildLiveData(data){
 
 let sortedSectors=[];
 
+function fmtVolUSD(tickers,data){
+  // 거래대금 = sum(price*volume), 단위: 억달러
+  let total=0;
+  tickers.forEach(sym=>{
+    const d=data[sym];
+    if(d?.price==null||!d?.volume)return;
+    total+=d.price*d.volume;
+  });
+  if(total<=0)return null;
+  const eok=total/1e8; // 1억 단위
+  if(eok>=1)return eok.toFixed(1)+'억$';
+  return (total/1e6).toFixed(0)+'백만$';
+}
+
+function getNumCols(){
+  const w=window.innerWidth;
+  if(w<700)return 1;
+  if(w<1000)return 2;
+  if(w<1300)return 3;
+  if(w<1700)return 4;
+  if(w<2000)return 5;
+  return 6;
+}
+
 function renderMain(data){
   data=data||currentData||closeData;
   const avgs=SECTORS.map(s=>({...s,avg:sectorAvg(s.t,data)}))
@@ -260,6 +283,7 @@ function renderMain(data){
   const cardsHtml=avgs.map(s=>{
     const sign=s.avg!=null&&s.avg>=0?'+':'';
     const avgC=cls(s.avg);
+    const volStr=fmtVolUSD(s.t,data);
     const rows=s.t.map(sym=>{
       const d=data[sym];
       const c=d?.change, p=d?.price, lp=d?.live_price;
@@ -272,8 +296,16 @@ function renderMain(data){
       </tr>`;
     }).join('');
     return `<div class="sc" data-name="${s.n}">
-      <div class="sc-hdr"><span class="sc-name">${s.n}</span><span class="sc-avg ${avgC}">${s.avg!=null?sign+s.avg.toFixed(1)+'%':'N/A'}</span></div>
-      <div class="sc-perf">${s.t.length}개 종목</div>
+      <div class="sc-hdr">
+        <div class="sc-name-wrap">
+          <span class="sc-name">${s.n}</span>
+          <span class="sc-name-kr">${s.kr||''}</span>
+        </div>
+        <div class="sc-right">
+          <span class="sc-avg ${avgC}">${s.avg!=null?sign+s.avg.toFixed(1)+'%':'N/A'}</span>
+          <span class="sc-vol">${volStr||''}</span>
+        </div>
+      </div>
       <table>
         <tr class="col-header"><td>종목명</td><td>전일종가</td><td>현재가</td><td>등락률</td></tr>
         ${rows}
@@ -281,13 +313,13 @@ function renderMain(data){
     </div>`;
   }).join('');
 
-  // 신문 칼럼 분배 (4열)
+  // 신문 칼럼 분배 (화면 폭에 따라 동적 열 수)
   const tmp=document.createElement('div');
   tmp.innerHTML=cardsHtml;
   const cardEls=Array.from(tmp.children);
   const grid=document.getElementById('grid');
   grid.innerHTML='';
-  const numCols=4;
+  const numCols=getNumCols();
   const cols=[];
   for(let i=0;i<numCols;i++){
     const c=document.createElement('div');
@@ -297,6 +329,11 @@ function renderMain(data){
   }
   cardEls.forEach((el,i)=>cols[i%numCols].appendChild(el));
 }
+
+window.addEventListener('resize',()=>{
+  clearTimeout(window._resizeTimer);
+  window._resizeTimer=setTimeout(()=>renderMain(currentData),250);
+});
 
 async function fetchAll(syms){
   const res={};

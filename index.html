@@ -9,6 +9,7 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 :root{
+  --pageMax:1080px;
   --bg:#07111f;
   --bg2:#0a1424;
   --surface:#101b30;
@@ -27,11 +28,39 @@
   --warn:#ffb020;
 }
 body{
-  background:var(--bg);
+  background:
+    radial-gradient(circle at top center, rgba(25,40,68,0.52) 0%, rgba(7,17,31,0.94) 360px, #030915 100%);
   color:var(--text);
   font-family:-apple-system,BlinkMacSystemFont,'Malgun Gothic','Apple SD Gothic Neo',sans-serif;
   font-size:12px;
   -webkit-font-smoothing:antialiased;
+}
+
+/* 중앙 집중형 레이아웃: 웹툰처럼 가운데 세로 피드 느낌 */
+.hdr,
+.meta,
+.tab-row,
+.controls,
+.notice,
+.main,
+.footer{
+  width:min(100%, var(--pageMax));
+  margin-left:auto;
+  margin-right:auto;
+}
+
+.hdr,
+.meta,
+.tab-row,
+.controls,
+.footer{
+  border-left:1px solid rgba(38,56,88,0.65);
+  border-right:1px solid rgba(38,56,88,0.65);
+}
+
+.hdr{
+  border-radius:0 0 12px 12px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.18);
 }
 .hdr{
   position:sticky;
@@ -138,7 +167,7 @@ select,input{
 }
 input{min-width:180px;}
 .notice{
-  margin:8px 10px 0;
+  margin-top:10px;
   padding:8px 10px;
   border:1px solid rgba(255,176,32,0.35);
   background:rgba(255,176,32,0.08);
@@ -149,15 +178,21 @@ input{min-width:180px;}
   line-height:1.45;
 }
 .notice.hidden{display:none;}
-.main{padding:8px 10px 14px;}
+.main{
+  padding:10px 0 18px;
+}
+.main > .table-wrap{
+  margin-left:0;
+  margin-right:0;
+}
 .table-wrap{
   background:#0c1627;
   border:1px solid var(--border);
-  border-radius:10px;
+  border-radius:12px;
   overflow:auto;
-  box-shadow:0 0 0 1px #0a1728;
+  box-shadow:0 12px 28px rgba(0,0,0,0.22), 0 0 0 1px #0a1728;
 }
-table{width:100%;border-collapse:collapse;min-width:860px;}
+table{width:100%;border-collapse:collapse;min-width:880px;}
 th{
   position:sticky;
   top:0;
@@ -265,6 +300,17 @@ tr:hover td{background:rgba(255,255,255,0.025);}
   background:var(--surface);
 }
 @media(max-width:760px){
+  :root{--pageMax:100%;}
+  .hdr,
+  .meta,
+  .tab-row,
+  .controls,
+  .footer{
+    border-left:0;
+    border-right:0;
+    border-radius:0;
+  }
+  .main{padding-left:8px;padding-right:8px;}
   .hdr-title{font-size:16px;}
   .hdr-sub{font-size:9px;}
   .btn{padding:6px 8px;font-size:10px;}
@@ -558,7 +604,7 @@ function setNotice(){
   const el = document.getElementById('notice');
   const msgs = [];
 
-  if(prices?.schema_version !== 'gics74_prices_v2'){
+  if(!String(prices?.schema_version || '').startsWith('gics74_prices_v2')){
     msgs.push('현재 cache/prices.json이 구버전일 수 있습니다. GitHub Actions가 한 번 실행된 뒤 정상 데이터로 바뀝니다.');
   }
   if(activeTab === 'live'){

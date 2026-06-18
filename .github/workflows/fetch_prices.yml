@@ -15,17 +15,26 @@ concurrency:
 jobs:
   fetch:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+
       - name: Run fetch script
+        env:
+          EODHD_API_TOKEN: ${{ secrets.EODHD_API_TOKEN }}
+          EODHD_ALWAYS_VERIFY: "SPCX"
+          EODHD_MAX_VERIFY: "20"
+          EODHD_ANOMALY_CHANGE_ABS: "15"
         run: python fetch_prices.py
+
       - name: Commit and push if changed
         run: |
           git config user.name "github-actions"

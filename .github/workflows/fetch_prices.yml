@@ -31,8 +31,10 @@ jobs:
         env:
           EODHD_API_TOKEN: ${{ secrets.EODHD_API_TOKEN }}
           EODHD_ALWAYS_VERIFY: "SPCX"
-          EODHD_MAX_VERIFY: "20"
-          EODHD_ANOMALY_CHANGE_ABS: "15"
+          EODHD_MAX_VERIFY: "100"
+          EODHD_ANOMALY_CHANGE_ABS: "8"
+          EODHD_PRICE_DIFF_PCT: "0.7"
+          EODHD_CHANGE_DIFF_PCTP: "1.0"
         run: python fetch_prices.py
 
       - name: Commit and push if changed

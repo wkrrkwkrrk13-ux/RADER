@@ -1,5 +1,5 @@
 """
-GICS74 Radar - fetch_prices.py v3 EODHD Crosscheck
+GICS74 Radar - fetch_prices.py v3.1 EODHD Crosscheck + Yahoo PrevClose Fix
 ==================================================
 목적:
 - Yahoo v8 chart로 미장 전체 수집
@@ -183,13 +183,13 @@ def parse_symbol(symbol, session, off, info):
     if not valid:
         raise ValueError("v8 chart has no valid daily close")
 
-    regular_price = sf(meta.get("regularMarketPrice"))
-    prev_close = (
+    meta_regular_price = sf(meta.get("regularMarketPrice"))
+    meta_prev_close = (
         sf(meta.get("regularMarketPreviousClose"))
         or sf(meta.get("previousClose"))
         or sf(meta.get("chartPreviousClose"))
     )
-    regular_volume = si(meta.get("regularMarketVolume"), 0)
+    meta_regular_volume = si(meta.get("regularMarketVolume"), 0)
     regular_time = meta.get("regularMarketTime")
 
     if len(valid) >= 2:
@@ -201,14 +201,21 @@ def parse_symbol(symbol, session, off, info):
         daily_last = valid[-1][1]
         daily_vol = valid[-1][2]
 
+    # v3.1 핵심 수정:
+    # Yahoo meta의 regularMarketPreviousClose가 신규상장/일부 종목에서 틀어지는 경우가 있음.
+    # 등락률은 chart 일봉의 마지막 종가와 직전 일봉 종가로 계산하는 쪽이 더 안정적이다.
+    # 예: SPCX는 가격은 185로 맞았지만 meta previousClose 기준이 꼬여 +23%로 계산됐음.
+    regular_price = daily_last if daily_last is not None else meta_regular_price
+    prev_close = daily_prev if daily_prev not in (None, 0) else meta_prev_close
+
     if regular_price is None:
-        regular_price = daily_last
+        regular_price = meta_regular_price
 
     if prev_close is None or prev_close == 0:
-        prev_close = daily_prev if daily_prev else regular_price
+        prev_close = meta_prev_close if meta_prev_close not in (None, 0) else regular_price
 
-    if not regular_volume:
-        regular_volume = daily_vol or 0
+    # 거래량도 일봉 quote의 마지막 volume을 우선 사용한다.
+    regular_volume = daily_vol or meta_regular_volume or 0
 
     regular_change = pct(regular_price, prev_close) or 0.0
 
@@ -544,7 +551,7 @@ def main():
     now_kst = now_utc.astimezone(kst)
 
     print("=" * 70)
-    print("GICS74 가격 수집 시작 v3 EODHD CROSSCHECK")
+    print("GICS74 가격 수집 시작 v3.1 EODHD CROSSCHECK PREVCLOSE FIX")
     print("UTC:", now_utc.isoformat())
     print("ET :", et.strftime("%Y-%m-%d %H:%M:%S"))
     print("KST:", now_kst.isoformat())
@@ -561,7 +568,7 @@ def main():
     date_key = infer_date(us, et.strftime("%Y-%m-%d"))
 
     output = {
-        "schema_version": "gics74_prices_v3_eodhd_crosscheck",
+        "schema_version": "gics74_prices_v3_1_eodhd_prevclose_fix",
         "updated_at": now_utc.isoformat(),
         "updated_at_kst": now_kst.isoformat(),
         "date_key": date_key,

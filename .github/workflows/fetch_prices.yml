@@ -1,10 +1,16 @@
 name: Fetch Prices
 
 on:
+  workflow_dispatch:
   schedule:
-    # UTC 기준. 10분마다 실행 (GitHub는 정확한 시각 보장은 안 하지만 대체로 비슷하게 돌아감)
-    - cron: '*/10 * * * *'
-  workflow_dispatch:  # 수동 실행 버튼도 활성화
+    - cron: "*/10 * * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fetch-prices
+  cancel-in-progress: true
 
 jobs:
   fetch:
@@ -12,20 +18,23 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
-
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
-
+          python-version: "3.12"
       - name: Run fetch script
         run: python fetch_prices.py
-
       - name: Commit and push if changed
         run: |
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
           git add cache/prices.json
-          git diff --staged --quiet || git commit -m "Update prices $(date -u +'%Y-%m-%d %H:%M UTC')"
-          git pull --rebase --autostash origin main
-          git push
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update prices cache"
+            git pull --rebase
+            git push
+          fi

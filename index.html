@@ -448,6 +448,156 @@ async function fetchPricesJSON(force=false){
   // 2순위: Vercel에 배포된 로컬 캐시
   return await fetchJSON(LOCAL_CACHE_URL, force);
 }
+
+function cacheAgeMinutes(priceData){
+  if(!priceData?.updated_at) return Infinity;
+  const t = new Date(priceData.updated_at).getTime();
+  if(!isFinite(t)) return Infinity;
+  return (Date.now() - t) / 60000;
+}
+
+function nyDateKey(){
+  try{
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone:'America/New_York',
+      year:'numeric',
+      month:'2-digit',
+      day:'2-digit'
+    }).format(new Date());
+  }catch(e){
+    return new Date().toISOString().slice(0,10);
+  }
+}
+
+function uniqueSymbolsFromSectors(sectorData){
+  const set = new Set();
+  for(const s of sectorData || []){
+    for(const t of s.tickers || []){
+      if(t.ticker) set.add(String(t.ticker).toUpperCase());
+    }
+  }
+  return Array.from(set).sort();
+}
+
+function metaBySymbolFromSectors(sectorData){
+  const m = {};
+  for(const s of sectorData || []){
+    for(const t of s.tickers || []){
+      const sym = String(t.ticker || '').toUpperCase();
+      if(!sym) continue;
+      m[sym] = {
+        display_ticker: t.display_ticker || t.ticker,
+        name: t.name || '',
+        market_cap_usd: t.market_cap_usd || 0,
+        gics11: s.gics11 || '',
+        industry: s.industry || ''
+      };
+    }
+  }
+  return m;
+}
+
+async function fetchLivePricesFromApi(sectorData, oldPrices=null){
+  const symbols = uniqueSymbolsFromSectors(sectorData);
+  const metaMap = metaBySymbolFromSectors(sectorData);
+  const us = {};
+  const failures = {};
+  let session = null;
+
+  const ovTxt = document.getElementById('ovTxt');
+  const chunks = [];
+  for(let i=0;i<symbols.length;i+=20) chunks.push(symbols.slice(i,i+20));
+
+  for(let i=0;i<chunks.length;i++){
+    const chunk = chunks[i];
+    if(ovTxt) ovTxt.textContent = `캐시가 오래되어 실시간 재조회 중... ${i*20}/${symbols.length}`;
+
+    try{
+      const url = `/api/quote?symbols=${encodeURIComponent(chunk.join(','))}`;
+      const data = await fetchJSON(url, true);
+
+      for(const sym of chunk){
+        const q = data?.[sym];
+        const meta = metaMap[sym] || {};
+        if(!q || q.error){
+          failures[sym] = q?.error || 'api quote missing';
+          continue;
+        }
+
+        session = session || q.session || oldPrices?.session || 'closed';
+
+        const regularPrice = Number(q.price ?? q.regular_price ?? q.live_price ?? 0);
+        const regularChange = Number(q.change ?? q.regular_change ?? q.live_change ?? 0);
+        const regularVolume = Number(q.volume ?? q.regular_volume ?? 0);
+        const livePrice = Number(q.live_price ?? regularPrice);
+        const liveChange = Number(q.live_change ?? regularChange);
+        const liveVolume = session === 'regular' ? regularVolume : Number(q.live_volume ?? 0);
+
+        us[sym] = {
+          symbol: sym,
+          display_ticker: meta.display_ticker || sym,
+          name: meta.name || '',
+          gics11: meta.gics11 || '',
+          industry: meta.industry || '',
+          market_cap_usd: meta.market_cap_usd || 0,
+          currency: 'USD',
+
+          prev_close: q.meta_prev_close ?? null,
+          regular_price: regularPrice,
+          regular_change: regularChange,
+          regular_volume: regularVolume,
+          regular_dollar_volume: regularPrice && regularVolume ? regularPrice * regularVolume : 0,
+
+          pre_price: null,
+          pre_change: null,
+          pre_volume: 0,
+          post_price: null,
+          post_change: null,
+          post_volume: 0,
+
+          live_session: session,
+          live_price: livePrice,
+          live_change: liveChange,
+          live_volume: liveVolume,
+          live_dollar_volume: livePrice && liveVolume ? livePrice * liveVolume : 0,
+
+          price: regularPrice,
+          change: regularChange,
+          volume: regularVolume,
+          source: q.source ? `vercel_api_${q.source}` : 'vercel_api_quote'
+        };
+      }
+    }catch(e){
+      for(const sym of chunk) failures[sym] = String(e.message || e);
+    }
+  }
+
+  if(ovTxt) ovTxt.textContent = '데이터 불러오는 중...';
+
+  const now = new Date();
+  const ok = Object.keys(us).length;
+  const failed = Object.keys(failures).length;
+  const finalSession = session || oldPrices?.session || 'closed';
+
+  return {
+    schema_version: 'gics74_prices_v2_api_fallback',
+    updated_at: now.toISOString(),
+    updated_at_kst: now.toLocaleString('ko-KR', {hour12:false}),
+    date_key: nyDateKey(),
+    session: finalSession,
+    is_us_dst: oldPrices?.is_us_dst ?? true,
+    regular_final_locked: finalSession !== 'regular',
+    source: 'vercel_api_quote_fallback',
+    counts: {
+      sectors: sectorData.length,
+      symbols: symbols.length,
+      ok,
+      failed
+    },
+    failures,
+    us
+  };
+}
 function getQuote(ticker, displayTicker){
   const us = prices?.us || {};
   return us[ticker] || us[displayTicker] || null;
@@ -667,6 +817,10 @@ function setNotice(){
     msgs.push('현재 cache/prices.json이 구버전일 수 있습니다. GitHub Actions가 한 번 실행된 뒤 정상 데이터로 바뀝니다.');
   }
 
+  if(prices?.source === 'vercel_api_quote_fallback'){
+    msgs.push('GitHub 캐시가 오래되어 Vercel API로 직접 실시간 재조회했습니다. GitHub Actions 상태는 별도로 확인하는 게 좋습니다.');
+  }
+
   if(prices?.updated_at){
     const ageMin = (Date.now() - new Date(prices.updated_at).getTime()) / 60000;
     if(isFinite(ageMin) && ageMin > 25){
@@ -827,7 +981,7 @@ function renderStatus(){
 
   const rows = [
     ['schema_version', schema],
-    ['cache_source', 'GitHub raw 우선 / Vercel local fallback'],
+    ['cache_source', prices?.source === 'vercel_api_quote_fallback' ? 'Vercel API 실시간 재조회' : 'GitHub raw 우선 / Vercel local fallback'],
     ['session', `${prices?.session || '—'} (${sessionText()})`],
     ['date_key', prices?.date_key || '—'],
     ['regular_final_locked', String(prices?.regular_final_locked)],
@@ -920,16 +1074,26 @@ async function loadData(force=false){
   ov.classList.remove('hidden');
 
   try{
-    const [sectorData, priceData] = await Promise.all([
+    const [sectorData, rawPriceData] = await Promise.all([
       fetchJSON('./sectors_data.json', force),
       fetchPricesJSON(force),
     ]);
 
     sectors = Array.isArray(sectorData) ? sectorData : [];
-    prices = priceData || {};
+    let priceData = rawPriceData || {};
 
     if(!sectors.length) throw new Error('sectors_data.json이 비어 있습니다.');
-    if(!prices.us) throw new Error('cache/prices.json에 us 데이터가 없습니다.');
+
+    // 캐시가 20분 이상 오래되었거나 새로고침 버튼을 눌렀는데도 낡은 캐시면
+    // Vercel /api/quote로 직접 다시 조회해서 화면을 살린다.
+    const age = cacheAgeMinutes(priceData);
+    if(!priceData.us || age > 20){
+      priceData = await fetchLivePricesFromApi(sectors, priceData);
+    }
+
+    prices = priceData || {};
+
+    if(!prices.us) throw new Error('가격 데이터가 없습니다.');
 
     render();
   }catch(e){

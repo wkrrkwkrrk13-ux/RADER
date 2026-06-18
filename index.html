@@ -430,18 +430,27 @@ function getField(q, mode){
   const price = Number(q.live_price ?? q.regular_price ?? q.price);
   const change = Number(q.live_change ?? q.regular_change ?? q.change);
   const liveVol = Number(q.live_volume ?? 0);
+  const regularPrice = Number(q.regular_price ?? q.price ?? 0);
   const regularVol = Number(q.regular_volume ?? q.volume ?? 0);
 
-  let dollar = Number(q.live_dollar_volume ?? 0);
-  if(!dollar && price && liveVol) dollar = price * liveVol;
+  // 1순위: 현재 세션에서 실제로 잡힌 실시간 거래대금
+  let liveDollar = Number(q.live_dollar_volume ?? 0);
+  if(!liveDollar && price && liveVol) liveDollar = price * liveVol;
 
-  // 본장 실시간이면 regular volume과 같게 봐도 됨.
-  if(!dollar && prices?.session === 'regular'){
-    const regDollar = Number(q.regular_dollar_volume ?? 0);
-    dollar = regDollar || (price && regularVol ? price * regularVol : 0);
+  // 2순위: 프리/애프터 거래량이 안 잡힐 때는 최근 본장 거래대금으로 대체
+  let regularDollar = Number(q.regular_dollar_volume ?? 0);
+  if(!regularDollar && regularPrice && regularVol) regularDollar = regularPrice * regularVol;
+
+  if(liveDollar > 0){
+    return {price, change, volume:liveVol, dollar:liveDollar, weightType:'실시간거래대금'};
   }
 
-  return {price, change, volume:liveVol, dollar, weightType:dollar > 0 ? '실시간거래대금' : '시총대체'};
+  if(regularDollar > 0){
+    return {price, change, volume:liveVol, dollar:regularDollar, weightType:'전일거래대금대체'};
+  }
+
+  // 3순위: 그래도 없을 때만 시총으로 대체
+  return {price, change, volume:liveVol, dollar:0, weightType:'시총대체'};
 }
 function sectorMetrics(mode='regular'){
   const rows = [];
@@ -458,6 +467,8 @@ function sectorMetrics(mode='regular'){
     let negativeDollar = 0;
     let marketCapSum = 0;
     let liveDollarCount = 0;
+    let regularFallbackCount = 0;
+    let marketCapFallbackCount = 0;
 
     for(const t of (s.tickers || [])){
       const q = getQuote(t.ticker, t.display_ticker);
@@ -478,9 +489,12 @@ function sectorMetrics(mode='regular'){
         weightSum += weight;
       }
 
+      if(f.weightType === '실시간거래대금') liveDollarCount += 1;
+      else if(f.weightType === '전일거래대금대체') regularFallbackCount += 1;
+      else if(f.weightType === '시총대체') marketCapFallbackCount += 1;
+
       if(f.dollar > 0){
         dollarSum += f.dollar;
-        liveDollarCount += 1;
         if(f.change > 0) positiveDollar += f.dollar;
         else if(f.change < 0) negativeDollar += f.dollar;
       }
@@ -515,7 +529,13 @@ function sectorMetrics(mode='regular'){
       dollar_bias:dollarBias,
       market_cap_usd:marketCapSum,
       live_dollar_count:liveDollarCount,
-      weight_note:(mode === 'live' && liveDollarCount === 0) ? '시총대체' : '거래대금'
+      regular_fallback_count:regularFallbackCount,
+      marketcap_fallback_count:marketCapFallbackCount,
+      weight_note: mode === 'regular'
+        ? '거래대금'
+        : (liveDollarCount > 0
+            ? '실시간거래대금'
+            : (regularFallbackCount > 0 ? '전일거래대금대체' : '시총대체'))
     });
   }
 
@@ -613,7 +633,7 @@ function setNotice(){
     const liveRows = sectorMetrics('live');
     const noLiveDollar = liveRows.filter(r=>r.live_dollar_count===0).length;
     if(noLiveDollar > 0){
-      msgs.push('Yahoo에서 프리/애프터 거래량이 안 잡히는 섹터는 실시간 탭에서 시총가중으로 대체 계산합니다.');
+      msgs.push('Yahoo에서 프리/애프터 거래량이 안 잡히는 섹터는 실시간 탭에서 전일 본장 거래대금으로 대체 계산합니다. 전일 거래대금도 없을 때만 시총가중을 씁니다.');
     }
   }
   if(activeTab === 'regular' && prices?.regular_final_locked === false){
@@ -704,7 +724,7 @@ function renderSectorTable(mode){
               <td class="${cls(r.net_dollar)} mono">${fmtMoney(r.net_dollar)}</td>
               <td class="mono">${r.ticker_count}</td>
               <td class="mono">${r.valid}</td>
-              <td><span class="badge ${r.weight_note==='거래대금'?'ok':'no'}">${esc(r.weight_note)}</span></td>
+              <td><span class="badge ${r.weight_note==='시총대체'?'no':'ok'}">${esc(r.weight_note)}</span></td>
             </tr>
           `).join('')}
         </tbody>

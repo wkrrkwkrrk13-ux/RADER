@@ -78,6 +78,14 @@ body{
 }
 .hdr-title{font-size:19px;font-weight:950;color:var(--accent);letter-spacing:-0.6px;}
 .hdr-sub{font-size:11px;color:var(--muted);margin-top:2px;font-weight:800;}
+.creator-line{
+  margin-top:3px;
+  font-size:10px;
+  font-weight:950;
+  color:rgba(247,200,74,0.82);
+  letter-spacing:0.35px;
+  text-transform:uppercase;
+}
 .hdr-right{display:flex;gap:6px;flex-shrink:0;}
 .btn{
   background:var(--surface);
@@ -335,6 +343,7 @@ tr:hover td{background:rgba(255,255,255,0.025);}
   <div>
     <div class="hdr-title">📡 GICS74 미장 자금흐름 레이더</div>
     <div class="hdr-sub" id="hdrSub">미장 74개 Industry · HTS 관종 매칭 62개 · 국장 종목 매핑 제거</div>
+    <div class="creator-line">Built by HJS</div>
   </div>
   <div class="hdr-right">
     <button class="btn btn-csv" onclick="downloadCSV()">⬇ CSV</button>
@@ -829,7 +838,7 @@ function render(){
   const rows = sectorMetrics('regular');
   const matched = sectors.filter(s=>s.has_kr_watchlist).length;
   document.getElementById('footer').textContent =
-    `GICS74 ${sectors.length}개 · HTS 매칭 ${matched}개 · 미장 티커 ${(prices?.counts?.symbols ?? rows.reduce((a,r)=>a+r.ticker_count,0)).toLocaleString()}개`;
+    `GICS74 ${sectors.length}개 · HTS 매칭 ${matched}개 · 미장 티커 ${(prices?.counts?.symbols ?? rows.reduce((a,r)=>a+r.ticker_count,0)).toLocaleString()}개 · Built by HJS`;
 }
 function setTab(tab){
   activeTab = tab;

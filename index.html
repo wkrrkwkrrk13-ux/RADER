@@ -194,6 +194,15 @@ input{min-width:180px;}
   margin-left:0;
   margin-right:0;
 }
+
+.stock-table{min-width:820px;}
+.stock-table th,
+.stock-table td{padding-left:5px;padding-right:5px;}
+.stock-table th:nth-child(1),
+.stock-table td:nth-child(1){min-width:160px;max-width:210px;}
+.stock-table th:nth-child(4),
+.stock-table td:nth-child(4){min-width:170px;max-width:250px;}
+
 .table-wrap{
   background:#0c1627;
   border:1px solid var(--border);
@@ -746,8 +755,8 @@ function renderStocks(){
   const rows = stockRows();
 
   const html = `
-    <div class="table-wrap">
-      <table>
+    <div class="table-wrap stock-wrap">
+      <table class="stock-table">
         <thead>
           <tr>
             <th>섹터</th>
@@ -759,7 +768,6 @@ function renderStocks(){
             <th>거래대금</th>
             <th>거래량</th>
             <th>시총</th>
-            <th>기여도</th>
           </tr>
         </thead>
         <tbody>
@@ -777,7 +785,6 @@ function renderStocks(){
               <td class="mono">${fmtMoney(r.dollar_volume)}</td>
               <td class="mono">${fmtNum(r.volume,0)}</td>
               <td class="mono">${fmtMoney(r.market_cap_usd)}</td>
-              <td class="${cls(r.contribution)} mono">${fmtMoney(r.contribution)}</td>
             </tr>
           `).join('')}
         </tbody>

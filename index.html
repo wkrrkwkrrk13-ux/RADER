@@ -391,7 +391,7 @@ const GITHUB_RAW_CACHE_URL = 'https://raw.githubusercontent.com/wkrrkwkrrk13-ux/
 const LOCAL_CACHE_URL = './cache/prices.json';
 
 let activeTab = 'regular';
-let sortMode = 'weighted';
+let sortMode = 'dollar';
 let stockMode = 'regular';
 let stockIndustry = '__ALL__';
 let stockSearch = '';
@@ -633,19 +633,33 @@ function mergeFinalCacheWithLive(cacheData, liveData, sectorData){
     if(useLiveAsRegularFinal && cur){
       // 애프터장/마감 이후라면 현재 regular_*가 그날 본장 확정값
       item = Object.assign({}, base, cur);
+      item.live_valid = true;
     }else{
       // 프리장/본장 중에는 regular_*는 캐시의 전일 확정값 유지
       item = Object.assign({}, base);
 
       if(cur){
+        // 실시간 API가 성공한 종목만 live_*를 갱신한다.
+        item.live_valid = true;
         item.live_session = liveSession;
-        item.live_price = cur.live_price ?? cur.regular_price ?? cur.price ?? item.live_price;
-        item.live_change = cur.live_change ?? cur.regular_change ?? cur.change ?? item.live_change;
+        item.live_price = cur.live_price ?? cur.regular_price ?? cur.price;
+        item.live_change = cur.live_change ?? cur.regular_change ?? cur.change;
         item.live_volume = cur.live_volume ?? 0;
         item.live_dollar_volume = cur.live_dollar_volume ?? 0;
 
         // 메타는 최신값 보완
         item.source = 'regular_cache_plus_live_api';
+      }else{
+        // 핵심 수정:
+        // 실시간 API가 실패한 종목은 전일 live/regular 값을 실시간 흐름에 절대 섞지 않는다.
+        // 본장 자금흐름 탭에서는 regular_* 캐시를 계속 쓰지만,
+        // 실시간 흐름 탭에서는 getField()에서 제외된다.
+        item.live_valid = false;
+        item.live_session = liveSession;
+        item.live_price = null;
+        item.live_change = null;
+        item.live_volume = 0;
+        item.live_dollar_volume = 0;
       }
     }
 
@@ -701,17 +715,24 @@ function getField(q, mode){
     return {price, change, volume, dollar, weightType:'거래대금'};
   }
 
-  const price = Number(q.live_price ?? q.regular_price ?? q.price);
-  const change = Number(q.live_change ?? q.regular_change ?? q.change);
+  // 실시간 탭에서는 live API가 성공한 종목만 사용한다.
+  // 실패 종목을 전일 regular/live 값으로 대체하면 SPCX 같은 왜곡이 생긴다.
+  if(q.live_valid === false) return null;
+
+  const price = Number(q.live_price);
+  const change = Number(q.live_change);
   const liveVol = Number(q.live_volume ?? 0);
   const regularPrice = Number(q.regular_price ?? q.price ?? 0);
   const regularVol = Number(q.regular_volume ?? q.volume ?? 0);
+
+  if(!isFinite(price) || !isFinite(change)) return null;
 
   // 1순위: 현재 세션에서 실제로 잡힌 실시간 거래대금
   let liveDollar = Number(q.live_dollar_volume ?? 0);
   if(!liveDollar && price && liveVol) liveDollar = price * liveVol;
 
-  // 2순위: 프리/애프터 거래량이 안 잡힐 때는 최근 본장 거래대금으로 대체
+  // 2순위: 현재 가격은 성공했는데 실시간 거래량만 없을 때, 가중치만 전일 본장 거래대금으로 대체
+  // 가격/등락률은 절대 전일값으로 대체하지 않는다.
   let regularDollar = Number(q.regular_dollar_volume ?? 0);
   if(!regularDollar && regularPrice && regularVol) regularDollar = regularPrice * regularVol;
 
@@ -815,7 +836,7 @@ function sectorMetrics(mode='regular'){
 
   const sorter = {
     weighted:(a,b)=> (b.weighted_change - a.weighted_change) || (b.dollar_volume - a.dollar_volume),
-    dollar:(a,b)=> (b.dollar_volume - a.dollar_volume) || (b.weighted_change - a.weighted_change),
+    dollar:(a,b)=> (b.dollar_volume - a.dollar_volume) || (b.breadth - a.breadth) || (b.weighted_change - a.weighted_change),
     breadth:(a,b)=> (b.breadth - a.breadth) || (b.weighted_change - a.weighted_change),
     netdollar:(a,b)=> (b.net_dollar - a.net_dollar) || (b.weighted_change - a.weighted_change),
     hts:(a,b)=> {
@@ -911,7 +932,7 @@ function setNotice(){
   }
 
   if(prices?.source === 'regular_cache_plus_live_api'){
-    msgs.push('GitHub 캐시가 오래되어 본장 자금흐름은 전일 확정값으로 유지하고, 실시간 흐름만 Vercel API로 보충했습니다. 일부 티커가 미갱신돼도 본장 확정값은 유지됩니다.');
+    msgs.push('GitHub 캐시가 오래되어 본장 자금흐름은 전일 확정값으로 유지하고, 실시간 흐름은 Vercel API로 성공한 종목만 계산합니다. 미갱신 종목은 실시간 계산에서 제외됩니다.');
   }else if(prices?.source === 'vercel_api_quote_fallback'){
     msgs.push('GitHub 캐시가 오래되어 Vercel API로 직접 실시간 재조회했습니다. GitHub Actions 상태는 별도로 확인하는 게 좋습니다.');
   }
@@ -948,13 +969,13 @@ function setControls(){
     c.innerHTML = `
       <span class="control-label">정렬</span>
       <select id="sortSel" onchange="sortMode=this.value; render()">
-        <option value="weighted" ${sortMode==='weighted'?'selected':''}>거래대금가중 등락률</option>
         <option value="dollar" ${sortMode==='dollar'?'selected':''}>거래대금 총액</option>
         <option value="breadth" ${sortMode==='breadth'?'selected':''}>상승비율</option>
+        <option value="weighted" ${sortMode==='weighted'?'selected':''}>거래대금가중 등락률</option>
         <option value="netdollar" ${sortMode==='netdollar'?'selected':''}>순매수성 거래대금</option>
         <option value="hts" ${sortMode==='hts'?'selected':''}>HTS 번호순</option>
       </select>
-      <span class="small">기본은 섹터 자금흐름용: 거래대금가중 등락률</span>
+      <span class="small">기본은 자금의 크기: 거래대금 총액. 가중등락률은 가격 반응 강도입니다.</span>
     `;
     return;
   }

@@ -383,6 +383,13 @@ tr:hover td{background:rgba(255,255,255,0.025);}
 <script>
 let sectors = [];
 let prices = null;
+
+// 가격 캐시는 Vercel 정적 파일이 아니라 GitHub 원본을 우선 조회한다.
+// 이유: GitHub Actions는 cache/prices.json을 갱신하지만,
+// Vercel 정적 배포가 늦거나 생략되면 ./cache/prices.json이 오래된 값으로 멈출 수 있음.
+const GITHUB_RAW_CACHE_URL = 'https://raw.githubusercontent.com/wkrrkwkrrk13-ux/RADER/main/cache/prices.json';
+const LOCAL_CACHE_URL = './cache/prices.json';
+
 let activeTab = 'regular';
 let sortMode = 'weighted';
 let stockMode = 'regular';
@@ -428,6 +435,18 @@ async function fetchJSON(url, force=false){
   const res = await fetch(cacheBust(url, force), {cache:'no-store'});
   if(!res.ok) throw new Error(`${url} ${res.status}`);
   return await res.json();
+}
+
+async function fetchPricesJSON(force=false){
+  // 1순위: GitHub Actions가 직접 갱신하는 원본 캐시
+  try{
+    return await fetchJSON(GITHUB_RAW_CACHE_URL, true);
+  }catch(e){
+    console.warn('GitHub raw cache fetch failed, falling back to local cache:', e);
+  }
+
+  // 2순위: Vercel에 배포된 로컬 캐시
+  return await fetchJSON(LOCAL_CACHE_URL, force);
 }
 function getQuote(ticker, displayTicker){
   const us = prices?.us || {};
@@ -647,6 +666,13 @@ function setNotice(){
   if(!String(prices?.schema_version || '').startsWith('gics74_prices_v2')){
     msgs.push('현재 cache/prices.json이 구버전일 수 있습니다. GitHub Actions가 한 번 실행된 뒤 정상 데이터로 바뀝니다.');
   }
+
+  if(prices?.updated_at){
+    const ageMin = (Date.now() - new Date(prices.updated_at).getTime()) / 60000;
+    if(isFinite(ageMin) && ageMin > 25){
+      msgs.push(`가격 캐시가 ${Math.round(ageMin)}분 전 데이터입니다. GitHub Actions의 Fetch Prices 실행 상태를 확인하세요.`);
+    }
+  }
   if(activeTab === 'live'){
     const liveRows = sectorMetrics('live');
     const noLiveDollar = liveRows.filter(r=>r.live_dollar_count===0).length;
@@ -801,6 +827,7 @@ function renderStatus(){
 
   const rows = [
     ['schema_version', schema],
+    ['cache_source', 'GitHub raw 우선 / Vercel local fallback'],
     ['session', `${prices?.session || '—'} (${sessionText()})`],
     ['date_key', prices?.date_key || '—'],
     ['regular_final_locked', String(prices?.regular_final_locked)],
@@ -895,7 +922,7 @@ async function loadData(force=false){
   try{
     const [sectorData, priceData] = await Promise.all([
       fetchJSON('./sectors_data.json', force),
-      fetchJSON('./cache/prices.json', force),
+      fetchPricesJSON(force),
     ]);
 
     sectors = Array.isArray(sectorData) ? sectorData : [];

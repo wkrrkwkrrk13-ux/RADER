@@ -339,6 +339,7 @@ tr:hover td{background:rgba(255,255,255,0.025);}
   .controls{overflow-x:auto;flex-wrap:nowrap;}
   table{min-width:820px;}
 }
+.score-cell{color:var(--gold);font-weight:900;}
 </style>
 </head>
 <body>
@@ -391,7 +392,7 @@ const GITHUB_RAW_CACHE_URL = 'https://raw.githubusercontent.com/wkrrkwkrrk13-ux/
 const LOCAL_CACHE_URL = './cache/prices.json';
 
 let activeTab = 'regular';
-let sortMode = 'dollar';
+let sortMode = 'score';
 let stockMode = 'regular';
 let stockIndustry = '__ALL__';
 let stockSearch = '';
@@ -416,6 +417,14 @@ function fmtPct(v){
 function fmtNum(v, digits=0){
   if(v === null || v === undefined || !isFinite(v)) return '—';
   return Number(v).toLocaleString('en-US', {maximumFractionDigits:digits, minimumFractionDigits:digits});
+}
+function fmtRvol(v){
+  if(v === null || v === undefined || !isFinite(v)) return '—';
+  return `${Number(v).toFixed(2)}x`;
+}
+function fmtScore(v){
+  if(v === null || v === undefined || !isFinite(v)) return '—';
+  return Number(v).toFixed(1);
 }
 function fmtMoney(v){
   if(v === null || v === undefined || !isFinite(v) || v <= 0) return '—';
@@ -712,7 +721,9 @@ function getField(q, mode){
     const volume = Number(q.regular_volume ?? q.volume ?? 0);
     let dollar = Number(q.regular_dollar_volume ?? 0);
     if(!dollar && price && volume) dollar = price * volume;
-    return {price, change, volume, dollar, weightType:'거래대금'};
+    const avgDollar = Number(q.regular_avg20_dollar_volume ?? 0);
+    const rvol = avgDollar > 0 && dollar > 0 ? dollar / avgDollar : null;
+    return {price, change, volume, dollar, avgDollar, rvol, weightType:'거래대금'};
   }
 
   // 실시간 탭에서는 live API가 성공한 종목만 사용한다.
@@ -736,16 +747,20 @@ function getField(q, mode){
   let regularDollar = Number(q.regular_dollar_volume ?? 0);
   if(!regularDollar && regularPrice && regularVol) regularDollar = regularPrice * regularVol;
 
+  const avgDollar = Number(q.regular_avg20_dollar_volume ?? 0);
+
   if(liveDollar > 0){
-    return {price, change, volume:liveVol, dollar:liveDollar, weightType:'실시간거래대금'};
+    const rvol = avgDollar > 0 ? liveDollar / avgDollar : null;
+    return {price, change, volume:liveVol, dollar:liveDollar, avgDollar, rvol, weightType:'실시간거래대금'};
   }
 
   if(regularDollar > 0){
-    return {price, change, volume:liveVol, dollar:regularDollar, weightType:'전일거래대금대체'};
+    const rvol = avgDollar > 0 ? regularDollar / avgDollar : null;
+    return {price, change, volume:liveVol, dollar:regularDollar, avgDollar, rvol, weightType:'전일거래대금대체'};
   }
 
   // 3순위: 그래도 없을 때만 시총으로 대체
-  return {price, change, volume:liveVol, dollar:0, weightType:'시총대체'};
+  return {price, change, volume:liveVol, dollar:0, avgDollar, rvol:null, weightType:'시총대체'};
 }
 function sectorMetrics(mode='regular'){
   const rows = [];
@@ -758,6 +773,7 @@ function sectorMetrics(mode='regular'){
     let weightedSum = 0;
     let weightSum = 0;
     let dollarSum = 0;
+    let avgDollarSum = 0;
     let positiveDollar = 0;
     let negativeDollar = 0;
     let marketCapSum = 0;
@@ -793,6 +809,10 @@ function sectorMetrics(mode='regular'){
         if(f.change > 0) positiveDollar += f.dollar;
         else if(f.change < 0) negativeDollar += f.dollar;
       }
+
+      if(f.avgDollar > 0){
+        avgDollarSum += f.avgDollar;
+      }
     }
 
     const weightedChange = weightSum > 0 ? weightedSum / weightSum : 0;
@@ -800,6 +820,7 @@ function sectorMetrics(mode='regular'){
     const downBreadth = valid > 0 ? down / valid : 0;
     const netDollar = positiveDollar - negativeDollar;
     const dollarBias = dollarSum > 0 ? netDollar / dollarSum * 100 : null;
+    const sectorRvol = avgDollarSum > 0 ? dollarSum / avgDollarSum : null;
 
     rows.push({
       id:s.id,
@@ -818,6 +839,14 @@ function sectorMetrics(mode='regular'){
       breadth,
       down_breadth:downBreadth,
       dollar_volume:dollarSum,
+      avg20_dollar_volume:avgDollarSum,
+      sector_rvol:sectorRvol,
+      score:0,
+      dollar_score:0,
+      rvol_score:0,
+      breadth_score:0,
+      weighted_score:0,
+      net_score:0,
       positive_dollar:positiveDollar,
       negative_dollar:negativeDollar,
       net_dollar:netDollar,
@@ -834,9 +863,45 @@ function sectorMetrics(mode='regular'){
     });
   }
 
+  // 종합점수: 거래대금 30 + RVOL 25 + 상승비율 20 + 가중등락 20 + 순매수성 5
+  // 단위가 서로 다르므로 모두 0~100점으로 변환한 뒤 합산한다.
+  const validRows = rows.filter(r => r.valid > 0);
+
+  const logDollars = validRows.map(r => Math.log10(Math.max(r.dollar_volume || 0, 1)));
+  const minLogDollar = Math.min(...logDollars);
+  const maxLogDollar = Math.max(...logDollars);
+  const dollarRange = maxLogDollar - minLogDollar;
+
+  for(const r of rows){
+    const logDollar = Math.log10(Math.max(r.dollar_volume || 0, 1));
+    r.dollar_score = dollarRange > 0 ? ((logDollar - minLogDollar) / dollarRange * 100) : 0;
+
+    // RVOL: 1배=33점, 2배=67점, 3배 이상=100점으로 캡
+    r.rvol_score = r.sector_rvol ? Math.max(0, Math.min(100, r.sector_rvol / 3 * 100)) : 0;
+
+    r.breadth_score = Math.max(0, Math.min(100, (r.breadth || 0) * 100));
+
+    // 가중등락: -3% 이하는 0점, +7% 이상은 100점
+    r.weighted_score = Math.max(0, Math.min(100, ((r.weighted_change || 0) + 3) / 10 * 100));
+
+    // 순매수성: dollar_bias -100~+100을 0~100으로 변환
+    r.net_score = r.dollar_bias === null || r.dollar_bias === undefined
+      ? 0
+      : Math.max(0, Math.min(100, (r.dollar_bias + 100) / 2));
+
+    r.score =
+      r.dollar_score * 0.30 +
+      r.rvol_score * 0.25 +
+      r.breadth_score * 0.20 +
+      r.weighted_score * 0.20 +
+      r.net_score * 0.05;
+  }
+
   const sorter = {
+    score:(a,b)=> (b.score - a.score) || (b.dollar_volume - a.dollar_volume),
     weighted:(a,b)=> (b.weighted_change - a.weighted_change) || (b.dollar_volume - a.dollar_volume),
     dollar:(a,b)=> (b.dollar_volume - a.dollar_volume) || (b.breadth - a.breadth) || (b.weighted_change - a.weighted_change),
+    rvol:(a,b)=> ((b.sector_rvol || 0) - (a.sector_rvol || 0)) || (b.dollar_volume - a.dollar_volume),
     breadth:(a,b)=> (b.breadth - a.breadth) || (b.weighted_change - a.weighted_change),
     netdollar:(a,b)=> (b.net_dollar - a.net_dollar) || (b.weighted_change - a.weighted_change),
     hts:(a,b)=> {
@@ -927,7 +992,7 @@ function setNotice(){
   const el = document.getElementById('notice');
   const msgs = [];
 
-  if(!String(prices?.schema_version || '').startsWith('gics74_prices_v2')){
+  if(!String(prices?.schema_version || '').startsWith('gics74_prices_v')){
     msgs.push('현재 cache/prices.json이 구버전일 수 있습니다. GitHub Actions가 한 번 실행된 뒤 정상 데이터로 바뀝니다.');
   }
 
@@ -969,13 +1034,15 @@ function setControls(){
     c.innerHTML = `
       <span class="control-label">정렬</span>
       <select id="sortSel" onchange="sortMode=this.value; render()">
+        <option value="score" ${sortMode==='score'?'selected':''}>종합점수</option>
         <option value="dollar" ${sortMode==='dollar'?'selected':''}>거래대금 총액</option>
+        <option value="rvol" ${sortMode==='rvol'?'selected':''}>RVOL</option>
         <option value="breadth" ${sortMode==='breadth'?'selected':''}>상승비율</option>
         <option value="weighted" ${sortMode==='weighted'?'selected':''}>거래대금가중 등락률</option>
         <option value="netdollar" ${sortMode==='netdollar'?'selected':''}>순매수성 거래대금</option>
         <option value="hts" ${sortMode==='hts'?'selected':''}>HTS 번호순</option>
       </select>
-      <span class="small">기본은 자금의 크기: 거래대금 총액. 가중등락률은 가격 반응 강도입니다.</span>
+      <span class="small">기본은 종합점수: 거래대금 30% + RVOL 25% + 상승비율 20% + 가중등락 20% + 순매수성 5%</span>
     `;
     return;
   }
@@ -1013,9 +1080,11 @@ function renderSectorTable(mode){
             <th>HTS</th>
             <th>섹터</th>
             <th>매칭</th>
+            <th>점수</th>
             <th>${label} 가중등락</th>
             <th>상승비율</th>
             <th>거래대금</th>
+            <th>RVOL</th>
             <th>순매수성</th>
             <th>종목</th>
             <th>성공</th>
@@ -1032,9 +1101,11 @@ function renderSectorTable(mode){
                 <div class="industry-kr">${esc(r.kr)}</div>
               </td>
               <td>${r.has_kr_watchlist ? '<span class="badge ok">HTS</span>' : '<span class="badge no">미장만</span>'}</td>
+              <td class="mono score-cell">${fmtScore(r.score)}</td>
               <td class="${cls(r.weighted_change)} mono">${fmtPct(r.weighted_change)}</td>
               <td class="mono">${fmtPct(r.breadth*100)} <span class="small">(${r.up}/${r.valid})</span></td>
               <td class="mono">${fmtMoney(r.dollar_volume)}</td>
+              <td class="mono">${fmtRvol(r.sector_rvol)}</td>
               <td class="${cls(r.net_dollar)} mono">${fmtMoney(r.net_dollar)}</td>
               <td class="mono">${r.ticker_count}</td>
               <td class="mono">${r.valid}</td>
@@ -1180,9 +1251,9 @@ function downloadCSV(){
   }else{
     const mode = activeTab === 'live' ? 'live' : 'regular';
     const data = sectorMetrics(mode);
-    rows.push(['순위','HTS번호','한글명','GICS11','GICS74','HTS매칭','가중등락률','상승비율','상승종목','성공종목','전체종목','거래대금','순매수성거래대금','가중방식']);
+    rows.push(['순위','HTS번호','한글명','GICS11','GICS74','HTS매칭','종합점수','가중등락률','상승비율','RVOL','상승종목','성공종목','전체종목','거래대금','20일평균거래대금','순매수성거래대금','가중방식']);
     for(const r of data){
-      rows.push([r.rank,r.hts_no||'',r.kr,r.gics11,r.industry,r.has_kr_watchlist?'Y':'N',r.weighted_change,r.breadth,r.up,r.valid,r.ticker_count,r.dollar_volume,r.net_dollar,r.weight_note]);
+      rows.push([r.rank,r.hts_no||'',r.kr,r.gics11,r.industry,r.has_kr_watchlist?'Y':'N',r.score,r.weighted_change,r.breadth,r.sector_rvol,r.up,r.valid,r.ticker_count,r.dollar_volume,r.avg20_dollar_volume,r.net_dollar,r.weight_note]);
     }
     filename = `gics74_sector_${mode}_${prices?.date_key || 'date'}.csv`;
   }

@@ -1,5 +1,5 @@
 """
-GICS74 Radar - fetch_prices.py v3.1 EODHD Crosscheck + Yahoo PrevClose Fix
+GICS74 Radar - fetch_prices.py v3.2 EODHD Crosscheck + RVOL
 ==================================================
 목적:
 - Yahoo v8 chart로 미장 전체 수집
@@ -135,7 +135,7 @@ def load_symbols():
 def chart(symbol):
     url = (
         f"https://query1.finance.yahoo.com/v8/finance/chart/{url_quote(symbol)}"
-        f"?interval=1d&range=5d&includePrePost=true"
+        f"?interval=1d&range=30d&includePrePost=true"
     )
     return fetch_json(url)
 
@@ -201,6 +201,18 @@ def parse_symbol(symbol, session, off, info):
         daily_last = valid[-1][1]
         daily_vol = valid[-1][2]
 
+    # RVOL용 최근 평균 거래대금
+    # 마지막 봉은 오늘 본장 마감값이므로 제외하고, 직전 최대 20거래일 평균을 사용한다.
+    # 신규상장 등으로 3거래일 미만이면 RVOL 계산을 생략한다.
+    hist_for_avg = valid[-21:-1] if len(valid) >= 2 else []
+    hist_dollars = [
+        float(c) * int(v)
+        for _, c, v in hist_for_avg
+        if c is not None and v is not None and int(v) > 0
+    ]
+    avg20_dollar = (sum(hist_dollars) / len(hist_dollars)) if len(hist_dollars) >= 3 else None
+    avg20_days = len(hist_dollars)
+
     # v3.1 핵심 수정:
     # Yahoo meta의 regularMarketPreviousClose가 신규상장/일부 종목에서 틀어지는 경우가 있음.
     # 등락률은 chart 일봉의 마지막 종가와 직전 일봉 종가로 계산하는 쪽이 더 안정적이다.
@@ -263,6 +275,9 @@ def parse_symbol(symbol, session, off, info):
         "regular_change": round(float(regular_change), 4),
         "regular_volume": regular_volume,
         "regular_dollar_volume": round(float(regular_price) * regular_volume, 2),
+        "regular_avg20_dollar_volume": round(float(avg20_dollar), 2) if avg20_dollar else None,
+        "regular_avg20_days": avg20_days,
+        "regular_dollar_rvol": round((float(regular_price) * regular_volume) / avg20_dollar, 4) if avg20_dollar and avg20_dollar > 0 else None,
         "regular_market_time": regular_time,
         "regular_date": regular_date,
         "pre_price": round(float(pre_price), 4) if pre_price is not None else None,
@@ -276,6 +291,7 @@ def parse_symbol(symbol, session, off, info):
         "live_change": round(float(live_change), 4),
         "live_volume": live_volume,
         "live_dollar_volume": round(float(live_price) * live_volume, 2),
+        "live_dollar_rvol": round((float(live_price) * live_volume) / avg20_dollar, 4) if avg20_dollar and avg20_dollar > 0 else None,
         "live_valid": True,
         "price": round(float(regular_price), 4),
         "change": round(float(regular_change), 4),
@@ -487,6 +503,8 @@ def apply_eodhd_corrections(us_data):
         corrected["regular_change"] = round(float(e_change), 4)
         corrected["regular_volume"] = e_volume
         corrected["regular_dollar_volume"] = round(float(e_price) * e_volume, 2)
+        avg20 = sf(corrected.get("regular_avg20_dollar_volume"))
+        corrected["regular_dollar_rvol"] = round(corrected["regular_dollar_volume"] / avg20, 4) if avg20 and avg20 > 0 else None
         corrected["regular_market_time"] = e_timestamp
         corrected["price"] = corrected["regular_price"]
         corrected["change"] = corrected["regular_change"]
@@ -507,6 +525,7 @@ def apply_eodhd_corrections(us_data):
         corrected["live_change"] = corrected["regular_change"]
         corrected["live_volume"] = corrected["regular_volume"]
         corrected["live_dollar_volume"] = corrected["regular_dollar_volume"]
+        corrected["live_dollar_rvol"] = corrected.get("regular_dollar_rvol")
         corrected["live_valid"] = True
 
         us_data[sym] = corrected
@@ -551,12 +570,12 @@ def main():
     now_kst = now_utc.astimezone(kst)
 
     print("=" * 70)
-    print("GICS74 가격 수집 시작 v3.1 EODHD CROSSCHECK PREVCLOSE FIX")
+    print("GICS74 가격 수집 시작 v3.2 EODHD CROSSCHECK RVOL")
     print("UTC:", now_utc.isoformat())
     print("ET :", et.strftime("%Y-%m-%d %H:%M:%S"))
     print("KST:", now_kst.isoformat())
     print("SESSION:", session)
-    print("SOURCE: Yahoo v8 chart daily fast + EODHD crosscheck")
+    print("SOURCE: Yahoo v8 chart 30d + EODHD crosscheck + RVOL")
     print("=" * 70)
 
     symbols, meta, sectors = load_symbols()
@@ -568,7 +587,7 @@ def main():
     date_key = infer_date(us, et.strftime("%Y-%m-%d"))
 
     output = {
-        "schema_version": "gics74_prices_v3_1_eodhd_prevclose_fix",
+        "schema_version": "gics74_prices_v3_2_eodhd_rvol",
         "updated_at": now_utc.isoformat(),
         "updated_at_kst": now_kst.isoformat(),
         "date_key": date_key,

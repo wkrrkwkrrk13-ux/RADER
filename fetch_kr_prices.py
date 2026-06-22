@@ -1,304 +1,355 @@
 """
-GICS Close Radar - fetch_kr_prices.py v2 Yahoo KR Close Fallback
-================================================================
+KR Close Radar - fetch_kr_prices.py v3 NAVER DAILY CLOSE
+========================================================
 목적:
-- GitHub Actions에서 pykrx/KRX 직접 호출이 막히는 경우를 피하기 위해 Yahoo quote API로 국장 종가를 수집
-- 통합 GICS 마스터의 KR 종목을 cache/kr_prices.json에 저장
-- KOSPI/KOSDAQ 구분 정보가 없어도 각 종목코드에 .KS / .KQ를 모두 붙여 조회 후 성공한 쪽을 채택
+- KRX/pykrx 호출이 GitHub Actions에서 막히는 문제를 우회
+- Yahoo quote batch 401 문제를 우회
+- 네이버 금융 일봉(siseJson)으로 국장 종가/거래량을 수집
+- cache/kr_prices.json 생성
 
-주의:
-- regular_dollar_volume 필드는 기존 프론트 호환을 위해 이름을 유지하지만, KR 종목에서는 KRW 거래대금 추정값(종가*거래량)이다.
-- RVOL은 Yahoo quote 단건 응답만으로는 20일 평균 거래대금을 알 수 없어 null 처리한다.
+입력:
+- GICS_통합마스터_관종번호순.json
+
+출력:
+- cache/kr_prices.json
 """
 
+import ast
 import json
 import os
+import re
 import time
 import urllib.request
+from collections import Counter
 from datetime import datetime, timezone, timedelta
-from urllib.parse import quote as url_quote
+from urllib.parse import urlencode
 
 MASTER_PATH = "GICS_통합마스터_관종번호순.json"
 OUTPUT_PATH = "cache/kr_prices.json"
 
-CHUNK_SIZE = 160
-REQUEST_DELAY = 0.15
-TIMEOUT = 15
-MAX_RETRIES = 2
+REQUEST_DELAY = float(os.getenv("KR_REQUEST_DELAY", "0.035"))
+TIMEOUT = int(os.getenv("KR_TIMEOUT", "8"))
+MAX_RETRIES = int(os.getenv("KR_MAX_RETRIES", "2"))
+LOOKBACK_DAYS = int(os.getenv("KR_LOOKBACK_DAYS", "65"))
+MIN_OK_RATIO = float(os.getenv("KR_MIN_OK_RATIO", "0.35"))
 
 
 def now_kst():
-    return datetime.now(timezone.utc).astimezone(timezone(timedelta(hours=9)))
+    return datetime.now(timezone.utc) + timedelta(hours=9)
 
 
-def ymd_dash_from_ts(ts):
-    try:
-        return datetime.fromtimestamp(int(ts), tz=timezone.utc).astimezone(
-            timezone(timedelta(hours=9))
-        ).strftime("%Y-%m-%d")
-    except Exception:
-        return now_kst().strftime("%Y-%m-%d")
-
-
-def sf(v):
-    try:
-        if v is None or v == "":
-            return None
-        return float(v)
-    except Exception:
-        return None
-
-
-def si(v, default=0):
-    try:
-        if v is None or v == "":
-            return default
-        return int(float(v))
-    except Exception:
-        return default
-
-
-def pct(price, base):
-    price, base = sf(price), sf(base)
-    if price is None or base in (None, 0):
-        return None
-    return round((price - base) / base * 100, 4)
-
-
-def fetch_json(url, timeout=TIMEOUT):
-    req = urllib.request.Request(
-        url,
-        headers={
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-            "Accept": "application/json,text/plain,*/*",
-            "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
-        },
-    )
-    with urllib.request.urlopen(req, timeout=timeout) as r:
-        return json.loads(r.read().decode("utf-8"))
-
-
-def fetch_yahoo_quote_batch(symbols):
-    if not symbols:
-        return {}
-
-    syms = ",".join(url_quote(s) for s in symbols)
-    url = f"https://query1.finance.yahoo.com/v7/finance/quote?symbols={syms}"
-
-    last_err = None
-    for attempt in range(MAX_RETRIES + 1):
-        try:
-            data = fetch_json(url)
-            rows = data.get("quoteResponse", {}).get("result", []) or []
-            return {str(q.get("symbol", "")).upper(): q for q in rows if q.get("symbol")}
-        except Exception as e:
-            last_err = e
-            time.sleep(0.4 + attempt * 0.6)
-
-    raise RuntimeError(f"Yahoo quote batch failed: {last_err}")
+def normalize_code(code):
+    s = str(code or "").strip()
+    # 일반 상장종목은 6자리 숫자. 알파뉴메릭 코드는 네이버에서 조회 불가할 수 있음.
+    if re.fullmatch(r"\d{6}", s):
+        return s
+    return s
 
 
 def load_kr_master():
     with open(MASTER_PATH, encoding="utf-8") as f:
-        master = json.load(f)
+        data = json.load(f)
 
-    rows = []
-    for r in master.get("records", []):
+    records = data.get("records", [])
+    kr = []
+    seen = set()
+    for r in records:
         if r.get("market") != "KR":
             continue
-        code = str(r.get("code", "")).strip()
-        if not code:
+        code = normalize_code(r.get("code"))
+        if not code or code in seen:
             continue
+        seen.add(code)
+        kr.append({
+            "code": code,
+            "name": r.get("name", ""),
+            "watchlist_no": r.get("watchlist_no", ""),
+            "sector_code": r.get("sector_code", ""),
+            "sector": r.get("sector", ""),
+            "industry_group_code": r.get("industry_group_code", ""),
+            "industry_group": r.get("industry_group", ""),
+            "industry_code": r.get("industry_code", ""),
+            "industry": r.get("industry", ""),
+            "sub_industry": r.get("sub_industry", ""),
+        })
+    return kr
 
-        # 보통 6자리 숫자. 일부 알파뉴메릭 KRX 코드는 Yahoo에서 조회가 안 될 가능성이 높다.
-        code = code.zfill(6) if code.isdigit() else code.upper()
-        item = dict(r)
-        item["code"] = code
-        rows.append(item)
 
-    seen = set()
-    out = []
-    for r in rows:
-        if r["code"] in seen:
-            continue
-        seen.add(r["code"])
-        out.append(r)
-    return out
+def fetch_text(url, timeout=TIMEOUT):
+    req = urllib.request.Request(
+        url,
+        headers={
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+            "Accept": "text/plain, */*",
+            "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
+            "Referer": "https://finance.naver.com/",
+        },
+    )
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        raw = resp.read()
+        for enc in ("utf-8", "euc-kr", "cp949"):
+            try:
+                return raw.decode(enc)
+            except Exception:
+                pass
+        return raw.decode("utf-8", errors="ignore")
 
 
-def choose_quote(base_code, quote_map):
-    candidates = []
-    for suffix in (".KS", ".KQ"):
-        ysym = f"{base_code}{suffix}".upper()
-        q = quote_map.get(ysym)
-        if not q:
-            continue
+def naver_sise_url(code, start_yyyymmdd, end_yyyymmdd):
+    params = urlencode({
+        "symbol": code,
+        "requestType": 1,
+        "startTime": start_yyyymmdd,
+        "endTime": end_yyyymmdd,
+        "timeframe": "day",
+    })
+    return f"https://api.finance.naver.com/siseJson.naver?{params}"
 
-        price = sf(q.get("regularMarketPrice"))
-        prev = sf(q.get("regularMarketPreviousClose")) or sf(q.get("regularMarketPreviousCloseRaw"))
-        volume = si(q.get("regularMarketVolume"), 0)
-        quote_type = q.get("quoteType")
 
-        if price is None:
-            continue
-
-        # 거래소 정보가 있으면 참고. 그래도 둘 다 있으면 거래량 있는 쪽 우선.
-        score = 0
-        if quote_type == "EQUITY":
-            score += 5
-        if prev not in (None, 0):
-            score += 5
-        if volume > 0:
-            score += 3
-        if suffix == ".KS":
-            score += 0.1
-
-        candidates.append((score, suffix, q))
-
-    if not candidates:
+def to_num(v):
+    if v is None:
+        return None
+    if isinstance(v, (int, float)):
+        return float(v)
+    s = str(v).strip().replace(",", "")
+    if not s or s in ("-", "null", "None"):
+        return None
+    try:
+        return float(s)
+    except Exception:
         return None
 
-    candidates.sort(key=lambda x: x[0], reverse=True)
-    return candidates[0][2]
+
+def to_int(v):
+    n = to_num(v)
+    if n is None:
+        return 0
+    return int(n)
 
 
-def build_yahoo_symbol_list(codes):
-    symbols = []
-    for code in codes:
-        # Yahoo Korea는 숫자코드.KS / 숫자코드.KQ 형식만 안정적이다.
-        if code.isdigit() and len(code) == 6:
-            symbols.append(f"{code}.KS")
-            symbols.append(f"{code}.KQ")
-    return symbols
+def normalize_date(v):
+    s = str(v or "").strip()
+    digits = re.sub(r"\D", "", s)
+    if len(digits) >= 8:
+        d = digits[:8]
+        return f"{d[:4]}-{d[4:6]}-{d[6:8]}", d
+    return None, None
+
+
+def parse_sise_json(text):
+    # 네이버 응답은 JS 배열 형태. 보통 ast.literal_eval로 처리 가능.
+    cleaned = text.strip()
+    if not cleaned:
+        return []
+
+    # 앞뒤에 불필요한 문자가 붙을 경우 배열 부분만 추출
+    start = cleaned.find("[")
+    end = cleaned.rfind("]")
+    if start >= 0 and end > start:
+        cleaned = cleaned[start:end + 1]
+
+    try:
+        arr = ast.literal_eval(cleaned)
+    except Exception:
+        # 최후 보정: 날짜와 숫자 행만 정규식으로 추출
+        rows = []
+        row_re = re.compile(r"\[\s*['\"]?([0-9.\-]+)['\"]?\s*,\s*([0-9,.-]+)\s*,\s*([0-9,.-]+)\s*,\s*([0-9,.-]+)\s*,\s*([0-9,.-]+)\s*,\s*([0-9,.-]+)")
+        for m in row_re.finditer(cleaned):
+            rows.append([m.group(1), m.group(2), m.group(3), m.group(4), m.group(5), m.group(6)])
+        return rows
+
+    if not isinstance(arr, list):
+        return []
+
+    rows = []
+    for row in arr:
+        if not isinstance(row, (list, tuple)) or len(row) < 6:
+            continue
+        # 헤더 제거
+        if str(row[0]).strip() in ("날짜", "date", "Date"):
+            continue
+        rows.append(list(row))
+    return rows
+
+
+def fetch_daily_rows(code, start, end):
+    url = naver_sise_url(code, start, end)
+    last_err = None
+    for attempt in range(MAX_RETRIES + 1):
+        try:
+            text = fetch_text(url)
+            rows = parse_sise_json(text)
+            if rows:
+                return rows
+            last_err = RuntimeError("empty naver rows")
+        except Exception as e:
+            last_err = e
+        time.sleep(0.25 + 0.35 * attempt)
+    raise RuntimeError(str(last_err))
+
+
+def rows_to_quote(code, base_info, rows):
+    parsed = []
+    for row in rows:
+        # row: 날짜, 시가, 고가, 저가, 종가, 거래량, 외국인소진율...
+        date_iso, date_key = normalize_date(row[0])
+        if not date_iso:
+            continue
+        open_p = to_num(row[1])
+        high = to_num(row[2])
+        low = to_num(row[3])
+        close = to_num(row[4])
+        volume = to_int(row[5])
+        if close is None or close <= 0:
+            continue
+        parsed.append({
+            "date": date_iso,
+            "date_key": date_key,
+            "open": open_p,
+            "high": high,
+            "low": low,
+            "close": close,
+            "volume": volume,
+            "dollar_volume": close * volume,  # KRW 거래대금 추정치
+        })
+
+    if not parsed:
+        raise RuntimeError("no valid parsed daily rows")
+
+    parsed.sort(key=lambda x: x["date_key"])
+    last = parsed[-1]
+    prev = parsed[-2] if len(parsed) >= 2 else None
+
+    price = last["close"]
+    prev_close = prev["close"] if prev else None
+    change = None
+    if prev_close and prev_close != 0:
+        change = round((price - prev_close) / prev_close * 100, 4)
+
+    hist = parsed[-21:-1] if len(parsed) >= 2 else []
+    hist_dv = [x["dollar_volume"] for x in hist if x.get("dollar_volume") and x.get("dollar_volume") > 0]
+    avg20 = round(sum(hist_dv) / len(hist_dv), 2) if len(hist_dv) >= 3 else None
+    rvol = round(last["dollar_volume"] / avg20, 4) if avg20 and avg20 > 0 else None
+
+    return {
+        "symbol": code,
+        "display_ticker": code,
+        "code": code,
+        "name": base_info.get("name", ""),
+        "market": "KR",
+        "currency": "KRW",
+        "watchlist_no": base_info.get("watchlist_no", ""),
+        "sector_code": base_info.get("sector_code", ""),
+        "sector": base_info.get("sector", ""),
+        "industry_group_code": base_info.get("industry_group_code", ""),
+        "industry_group": base_info.get("industry_group", ""),
+        "industry_code": base_info.get("industry_code", ""),
+        "industry": base_info.get("industry", ""),
+        "sub_industry": base_info.get("sub_industry", ""),
+        "prev_close": prev_close,
+        "regular_price": price,
+        "regular_change": change,
+        "regular_volume": last["volume"],
+        "regular_dollar_volume": round(last["dollar_volume"], 2),
+        "regular_avg20_dollar_volume": avg20,
+        "regular_avg20_days": len(hist_dv),
+        "regular_dollar_rvol": rvol,
+        "regular_date": last["date"],
+        "live_session": "closed",
+        "live_price": price,
+        "live_change": change,
+        "live_volume": last["volume"],
+        "live_dollar_volume": round(last["dollar_volume"], 2),
+        "live_dollar_rvol": rvol,
+        "live_valid": True,
+        "price": price,
+        "change": change,
+        "volume": last["volume"],
+        "source": "naver_siseJson_daily",
+        "data_quality": "naver_daily_close",
+    }
 
 
 def main():
-    start_utc = datetime.now(timezone.utc)
-    kst = now_kst()
+    utc = datetime.now(timezone.utc)
+    kst = utc + timedelta(hours=9)
+    end_dt = kst.date()
+    start_dt = end_dt - timedelta(days=LOOKBACK_DAYS)
+    start = start_dt.strftime("%Y%m%d")
+    end = end_dt.strftime("%Y%m%d")
 
     print("=" * 70)
-    print("국장 종가 가격 수집 시작 v2 YAHOO KR CLOSE FALLBACK")
-    print("UTC:", start_utc.isoformat())
-    print("KST:", kst.isoformat())
+    print("국장 종가 가격 수집 시작 v3 NAVER DAILY CLOSE")
+    print(f"UTC: {utc.isoformat()}")
+    print(f"KST: {kst.isoformat()}")
+    print(f"RANGE: {start} ~ {end}")
     print("=" * 70)
 
-    master_rows = load_kr_master()
-    print(f"KR 마스터 종목: {len(master_rows)}개")
+    master = load_kr_master()
+    print(f"KR 마스터 종목: {len(master)}개")
 
-    codes = [r["code"] for r in master_rows]
-    yahoo_symbols = build_yahoo_symbol_list(codes)
-    print(f"Yahoo 조회 심볼: {len(yahoo_symbols)}개 (.KS/.KQ 양쪽 조회)")
-
-    quote_map = {}
-    batch_errors = []
-
-    for i in range(0, len(yahoo_symbols), CHUNK_SIZE):
-        chunk = yahoo_symbols[i : i + CHUNK_SIZE]
-        try:
-            quote_map.update(fetch_yahoo_quote_batch(chunk))
-            print(f"[KR Yahoo] {min(i + CHUNK_SIZE, len(yahoo_symbols))}/{len(yahoo_symbols)} symbols")
-        except Exception as e:
-            msg = f"chunk {i}-{i + len(chunk)}: {e}"
-            batch_errors.append(msg)
-            print("[KR Yahoo] batch error:", msg)
-        time.sleep(REQUEST_DELAY)
+    os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
 
     kr = {}
     failures = {}
-    date_counter = {}
+    dates = []
 
-    for r in master_rows:
-        code = r["code"]
+    for idx, info in enumerate(master):
+        code = info["code"]
+        if idx % 100 == 0:
+            print(f"  [KR Naver] {idx}/{len(master)}")
+
+        if not re.fullmatch(r"\d{6}", code):
+            failures[code] = "non_numeric_code_not_supported_by_naver"
+            continue
+
         try:
-            q = choose_quote(code, quote_map)
-            if not q:
-                failures[code] = "yahoo_quote_missing"
-                continue
-
-            ysymbol = str(q.get("symbol", "")).upper()
-            price = sf(q.get("regularMarketPrice"))
-            prev_close = sf(q.get("regularMarketPreviousClose"))
-            change = sf(q.get("regularMarketChangePercent"))
-            if change is None:
-                change = pct(price, prev_close)
-            else:
-                change = round(change, 4)
-
-            volume = si(q.get("regularMarketVolume"), 0)
-            value = round(price * volume, 2) if price is not None and volume else 0
-            market_time = q.get("regularMarketTime")
-            regular_date = ymd_dash_from_ts(market_time)
-            date_counter[regular_date] = date_counter.get(regular_date, 0) + 1
-
-            kr[code] = {
-                "symbol": code,
-                "yahoo_symbol": ysymbol,
-                "name": r.get("name", "") or q.get("shortName", ""),
-                "market": "KR",
-                "currency": q.get("currency", "KRW"),
-                "exchange": q.get("fullExchangeName") or q.get("exchange"),
-                "prev_close": prev_close,
-                "regular_price": price,
-                "regular_change": change,
-                "regular_volume": volume,
-                "regular_dollar_volume": value,
-                "regular_avg20_dollar_volume": None,
-                "regular_avg20_days": 0,
-                "regular_dollar_rvol": None,
-                "regular_market_time": market_time,
-                "regular_date": regular_date,
-                "price": price,
-                "change": change,
-                "volume": volume,
-                "source": "yahoo_v7_quote_kr",
-                "data_quality": "yahoo_kr_close",
-            }
-
+            rows = fetch_daily_rows(code, start, end)
+            q = rows_to_quote(code, info, rows)
+            kr[code] = q
+            if q.get("regular_date"):
+                dates.append(q["regular_date"])
         except Exception as e:
-            failures[code] = str(e)
+            failures[code] = str(e)[:180]
+        time.sleep(REQUEST_DELAY)
 
-    # 가장 많이 잡힌 날짜를 date_key로 사용한다.
-    if date_counter:
-        date_key = sorted(date_counter.items(), key=lambda x: x[1], reverse=True)[0][0]
-    else:
-        date_key = now_kst().strftime("%Y-%m-%d")
+    common_date = Counter(dates).most_common(1)[0][0] if dates else kst.strftime("%Y-%m-%d")
+    ok = len(kr)
+    failed = len(master) - ok
+    ok_ratio = ok / max(1, len(master))
 
-    output = {
-        "schema_version": "gics_close_kr_prices_v2_yahoo_quote",
-        "updated_at": start_utc.isoformat(),
-        "updated_at_kst": now_kst().isoformat(),
-        "date_key": date_key,
-        "source": "yahoo_v7_quote_kr",
-        "note": "KR 종목은 Yahoo .KS/.KQ quote로 수집. regular_dollar_volume은 KRW 거래대금 추정값(price*volume). RVOL은 null.",
+    out = {
+        "schema_version": "kr_prices_v3_naver_daily_close",
+        "updated_at": utc.isoformat(),
+        "updated_at_kst": kst.isoformat(),
+        "date_key": common_date,
+        "session": "closed",
+        "regular_final_locked": True,
+        "source": "naver_siseJson_daily",
         "counts": {
-            "symbols": len(master_rows),
-            "ok": len(kr),
-            "failed": len(failures),
-            "quotes_returned": len(quote_map),
-            "batch_errors": len(batch_errors),
+            "symbols": len(master),
+            "ok": ok,
+            "failed": failed,
         },
-        "date_counter": date_counter,
-        "batch_errors": batch_errors[:20],
-        "failures": dict(list(failures.items())[:300]),
+        "failures": failures,
         "kr": kr,
     }
 
-    os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
     with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
-        json.dump(output, f, ensure_ascii=False, indent=2)
+        json.dump(out, f, ensure_ascii=False, separators=(",", ":"))
 
     print("=" * 70)
-    print("저장 완료:", OUTPUT_PATH)
-    print("date_key:", output["date_key"])
-    print(f"ok: {len(kr)}/{len(master_rows)}, failed: {len(failures)}")
-    print("quotes_returned:", len(quote_map))
+    print(f"저장 완료: {OUTPUT_PATH}")
+    print(f"date_key: {common_date}")
+    print(f"ok: {ok}/{len(master)}, failed: {failed}, ok_ratio: {ok_ratio:.2%}")
     if failures:
         print("failure sample:", list(failures.items())[:20])
     print("=" * 70)
 
-    # 일부 실패는 허용. 단 한 개도 못 받으면 실패 처리.
-    if len(kr) == 0:
-        raise RuntimeError("KR Yahoo quote fetch returned zero valid symbols")
+    if ok == 0:
+        raise RuntimeError("KR Naver fetch returned zero valid symbols")
+    if ok_ratio < MIN_OK_RATIO:
+        raise RuntimeError(f"KR Naver fetch ok ratio too low: {ok_ratio:.2%}")
 
 
 if __name__ == "__main__":

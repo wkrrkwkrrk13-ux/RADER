@@ -1,11 +1,12 @@
 """
-KR Close Radar - fetch_kr_prices.py v3 NAVER DAILY CLOSE
+KR Close Radar - fetch_kr_prices.py v4 NAVER DAILY CLOSE FAST
 ========================================================
 목적:
 - KRX/pykrx 호출이 GitHub Actions에서 막히는 문제를 우회
 - Yahoo quote batch 401 문제를 우회
 - 네이버 금융 일봉(siseJson)으로 국장 종가/거래량을 수집
 - cache/kr_prices.json 생성
+- ThreadPoolExecutor 병렬 수집으로 GitHub Actions 실행 시간 단축
 
 입력:
 - GICS_통합마스터_관종번호순.json
@@ -21,13 +22,15 @@ import re
 import time
 import urllib.request
 from collections import Counter
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone, timedelta
 from urllib.parse import urlencode
 
 MASTER_PATH = "GICS_통합마스터_관종번호순.json"
 OUTPUT_PATH = "cache/kr_prices.json"
 
-REQUEST_DELAY = float(os.getenv("KR_REQUEST_DELAY", "0.035"))
+REQUEST_DELAY = float(os.getenv("KR_REQUEST_DELAY", "0"))
+KR_WORKERS = int(os.getenv("KR_WORKERS", "18"))
 TIMEOUT = int(os.getenv("KR_TIMEOUT", "8"))
 MAX_RETRIES = int(os.getenv("KR_MAX_RETRIES", "2"))
 LOOKBACK_DAYS = int(os.getenv("KR_LOOKBACK_DAYS", "65"))
@@ -270,6 +273,20 @@ def rows_to_quote(code, base_info, rows):
     }
 
 
+def fetch_one(info, start, end):
+    code = info["code"]
+    if not re.fullmatch(r"\d{6}", code):
+        return code, None, "non_numeric_code_not_supported_by_naver"
+    try:
+        rows = fetch_daily_rows(code, start, end)
+        q = rows_to_quote(code, info, rows)
+        if REQUEST_DELAY > 0:
+            time.sleep(REQUEST_DELAY)
+        return code, q, None
+    except Exception as e:
+        return code, None, str(e)[:180]
+
+
 def main():
     utc = datetime.now(timezone.utc)
     kst = utc + timedelta(hours=9)
@@ -278,40 +295,38 @@ def main():
     start = start_dt.strftime("%Y%m%d")
     end = end_dt.strftime("%Y%m%d")
 
-    print("=" * 70)
-    print("국장 종가 가격 수집 시작 v3 NAVER DAILY CLOSE")
-    print(f"UTC: {utc.isoformat()}")
-    print(f"KST: {kst.isoformat()}")
-    print(f"RANGE: {start} ~ {end}")
-    print("=" * 70)
+    print("=" * 70, flush=True)
+    print("국장 종가 가격 수집 시작 v4 NAVER DAILY CLOSE FAST", flush=True)
+    print(f"UTC: {utc.isoformat()}", flush=True)
+    print(f"KST: {kst.isoformat()}", flush=True)
+    print(f"RANGE: {start} ~ {end}", flush=True)
+    print(f"WORKERS: {KR_WORKERS}", flush=True)
+    print("=" * 70, flush=True)
 
     master = load_kr_master()
-    print(f"KR 마스터 종목: {len(master)}개")
+    print(f"KR 마스터 종목: {len(master)}개", flush=True)
 
     os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
 
     kr = {}
     failures = {}
     dates = []
+    done = 0
 
-    for idx, info in enumerate(master):
-        code = info["code"]
-        if idx % 100 == 0:
-            print(f"  [KR Naver] {idx}/{len(master)}")
+    with ThreadPoolExecutor(max_workers=max(1, KR_WORKERS)) as ex:
+        futures = [ex.submit(fetch_one, info, start, end) for info in master]
+        for fut in as_completed(futures):
+            code, q, err = fut.result()
+            done += 1
+            if q:
+                kr[code] = q
+                if q.get("regular_date"):
+                    dates.append(q["regular_date"])
+            else:
+                failures[code] = err or "unknown_error"
 
-        if not re.fullmatch(r"\d{6}", code):
-            failures[code] = "non_numeric_code_not_supported_by_naver"
-            continue
-
-        try:
-            rows = fetch_daily_rows(code, start, end)
-            q = rows_to_quote(code, info, rows)
-            kr[code] = q
-            if q.get("regular_date"):
-                dates.append(q["regular_date"])
-        except Exception as e:
-            failures[code] = str(e)[:180]
-        time.sleep(REQUEST_DELAY)
+            if done % 100 == 0 or done == len(master):
+                print(f"  [KR Naver] {done}/{len(master)} ok={len(kr)} failed={len(failures)}", flush=True)
 
     common_date = Counter(dates).most_common(1)[0][0] if dates else kst.strftime("%Y-%m-%d")
     ok = len(kr)
@@ -319,17 +334,18 @@ def main():
     ok_ratio = ok / max(1, len(master))
 
     out = {
-        "schema_version": "kr_prices_v3_naver_daily_close",
+        "schema_version": "kr_prices_v4_naver_daily_close_fast",
         "updated_at": utc.isoformat(),
         "updated_at_kst": kst.isoformat(),
         "date_key": common_date,
         "session": "closed",
         "regular_final_locked": True,
-        "source": "naver_siseJson_daily",
+        "source": "naver_siseJson_daily_fast",
         "counts": {
             "symbols": len(master),
             "ok": ok,
             "failed": failed,
+            "workers": KR_WORKERS,
         },
         "failures": failures,
         "kr": kr,
@@ -338,13 +354,13 @@ def main():
     with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, separators=(",", ":"))
 
-    print("=" * 70)
-    print(f"저장 완료: {OUTPUT_PATH}")
-    print(f"date_key: {common_date}")
-    print(f"ok: {ok}/{len(master)}, failed: {failed}, ok_ratio: {ok_ratio:.2%}")
+    print("=" * 70, flush=True)
+    print(f"저장 완료: {OUTPUT_PATH}", flush=True)
+    print(f"date_key: {common_date}", flush=True)
+    print(f"ok: {ok}/{len(master)}, failed: {failed}, ok_ratio: {ok_ratio:.2%}", flush=True)
     if failures:
-        print("failure sample:", list(failures.items())[:20])
-    print("=" * 70)
+        print("failure sample:", list(failures.items())[:20], flush=True)
+    print("=" * 70, flush=True)
 
     if ok == 0:
         raise RuntimeError("KR Naver fetch returned zero valid symbols")

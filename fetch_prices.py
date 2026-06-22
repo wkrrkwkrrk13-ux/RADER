@@ -1,5 +1,5 @@
 """
-GICS74 Radar - fetch_prices.py v3.2 EODHD Crosscheck + RVOL
+GICS Close Radar - fetch_prices.py v4 US close + EODHD + RVOL
 ==================================================
 목적:
 - Yahoo v8 chart로 미장 전체 수집
@@ -20,6 +20,7 @@ from urllib.parse import quote as url_quote, urlencode
 from collections import Counter
 
 SECTORS_PATH = "sectors_data.json"
+MASTER_PATH = "GICS_통합마스터_관종번호순.json"
 OUTPUT_PATH = "cache/prices.json"
 
 REQUEST_DELAY = 0.035
@@ -109,11 +110,44 @@ def fetch_json(url, timeout=TIMEOUT):
 
 
 def load_symbols():
-    with open(SECTORS_PATH, encoding="utf-8") as f:
-        sectors = json.load(f)
-
+    """
+    미장 수집 대상은 통합 GICS 마스터의 US 레코드를 우선 사용한다.
+    과거 sectors_data.json도 fallback으로 지원한다.
+    """
     symbols = []
     meta = {}
+    sectors = []
+
+    if os.path.exists(MASTER_PATH):
+        with open(MASTER_PATH, encoding="utf-8") as f:
+            master = json.load(f)
+
+        industry_codes = set()
+        for r in master.get("records", []):
+            if r.get("market") != "US":
+                continue
+            t = str(r.get("code", "")).strip().upper()
+            if not t:
+                continue
+            symbols.append(t)
+            industry_codes.add(str(r.get("industry_code", "")))
+            meta[t] = {
+                "display_ticker": t,
+                "name": r.get("name", ""),
+                "market_cap_usd": r.get("market_cap_usd", 0),
+                "industry": r.get("industry", ""),
+                "gics11": r.get("sector", ""),
+                "industry_code": r.get("industry_code", ""),
+                "industry_group_code": r.get("industry_group_code", ""),
+                "sector_code": r.get("sector_code", ""),
+                "watchlist_no": r.get("watchlist_no", ""),
+            }
+
+        sectors = sorted(industry_codes)
+        return sorted(set(symbols)), meta, sectors
+
+    with open(SECTORS_PATH, encoding="utf-8") as f:
+        sectors = json.load(f)
 
     for sec in sectors:
         for it in sec.get("tickers", []):
@@ -570,7 +604,7 @@ def main():
     now_kst = now_utc.astimezone(kst)
 
     print("=" * 70)
-    print("GICS74 가격 수집 시작 v3.2 EODHD CROSSCHECK RVOL")
+    print("미장 종가 가격 수집 시작 v4 CLOSE RADAR")
     print("UTC:", now_utc.isoformat())
     print("ET :", et.strftime("%Y-%m-%d %H:%M:%S"))
     print("KST:", now_kst.isoformat())
@@ -587,7 +621,7 @@ def main():
     date_key = infer_date(us, et.strftime("%Y-%m-%d"))
 
     output = {
-        "schema_version": "gics74_prices_v3_2_eodhd_rvol",
+        "schema_version": "gics_close_us_prices_v4",
         "updated_at": now_utc.isoformat(),
         "updated_at_kst": now_kst.isoformat(),
         "date_key": date_key,

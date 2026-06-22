@@ -1,50 +1,59 @@
 """
-GICS Close Radar - fetch_kr_prices.py v1 KR close + RVOL
-========================================================
+GICS Close Radar - fetch_kr_prices.py v2 Yahoo KR Close Fallback
+================================================================
 목적:
-- KRX 전체 국장 종목의 최신 정규장 종가를 pykrx로 수집
-- 통합 GICS 마스터의 KR 종목 2,500여 개만 cache/kr_prices.json에 저장
-- 전일 대비 등락률, 거래대금, 20거래일 평균 거래대금, RVOL 계산
+- GitHub Actions에서 pykrx/KRX 직접 호출이 막히는 경우를 피하기 위해 Yahoo quote API로 국장 종가를 수집
+- 통합 GICS 마스터의 KR 종목을 cache/kr_prices.json에 저장
+- KOSPI/KOSDAQ 구분 정보가 없어도 각 종목코드에 .KS / .KQ를 모두 붙여 조회 후 성공한 쪽을 채택
 
 주의:
-- pykrx는 장 마감 직후 데이터 반영이 늦을 수 있다.
-- GitHub Actions에서는 requirements.txt의 pykrx 설치가 필요하다.
+- regular_dollar_volume 필드는 기존 프론트 호환을 위해 이름을 유지하지만, KR 종목에서는 KRW 거래대금 추정값(종가*거래량)이다.
+- RVOL은 Yahoo quote 단건 응답만으로는 20일 평균 거래대금을 알 수 없어 null 처리한다.
 """
 
 import json
 import os
 import time
+import urllib.request
 from datetime import datetime, timezone, timedelta
+from urllib.parse import quote as url_quote
 
 MASTER_PATH = "GICS_통합마스터_관종번호순.json"
 OUTPUT_PATH = "cache/kr_prices.json"
 
-LOOKBACK_CALENDAR_DAYS = 45
-MAX_TRADING_DAYS = 24
+CHUNK_SIZE = 160
+REQUEST_DELAY = 0.15
+TIMEOUT = 15
+MAX_RETRIES = 2
 
 
 def now_kst():
     return datetime.now(timezone.utc).astimezone(timezone(timedelta(hours=9)))
 
 
-def ymd(dt):
-    return dt.strftime("%Y%m%d")
-
-
-def ymd_dash(s):
-    return f"{s[:4]}-{s[4:6]}-{s[6:8]}"
+def ymd_dash_from_ts(ts):
+    try:
+        return datetime.fromtimestamp(int(ts), tz=timezone.utc).astimezone(
+            timezone(timedelta(hours=9))
+        ).strftime("%Y-%m-%d")
+    except Exception:
+        return now_kst().strftime("%Y-%m-%d")
 
 
 def sf(v):
     try:
-        return None if v is None else float(v)
+        if v is None or v == "":
+            return None
+        return float(v)
     except Exception:
         return None
 
 
 def si(v, default=0):
     try:
-        return default if v is None else int(float(v))
+        if v is None or v == "":
+            return default
+        return int(float(v))
     except Exception:
         return default
 
@@ -56,6 +65,39 @@ def pct(price, base):
     return round((price - base) / base * 100, 4)
 
 
+def fetch_json(url, timeout=TIMEOUT):
+    req = urllib.request.Request(
+        url,
+        headers={
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+            "Accept": "application/json,text/plain,*/*",
+            "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
+        },
+    )
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        return json.loads(r.read().decode("utf-8"))
+
+
+def fetch_yahoo_quote_batch(symbols):
+    if not symbols:
+        return {}
+
+    syms = ",".join(url_quote(s) for s in symbols)
+    url = f"https://query1.finance.yahoo.com/v7/finance/quote?symbols={syms}"
+
+    last_err = None
+    for attempt in range(MAX_RETRIES + 1):
+        try:
+            data = fetch_json(url)
+            rows = data.get("quoteResponse", {}).get("result", []) or []
+            return {str(q.get("symbol", "")).upper(): q for q in rows if q.get("symbol")}
+        except Exception as e:
+            last_err = e
+            time.sleep(0.4 + attempt * 0.6)
+
+    raise RuntimeError(f"Yahoo quote batch failed: {last_err}")
+
+
 def load_kr_master():
     with open(MASTER_PATH, encoding="utf-8") as f:
         master = json.load(f)
@@ -64,14 +106,16 @@ def load_kr_master():
     for r in master.get("records", []):
         if r.get("market") != "KR":
             continue
-        code = str(r.get("code", "")).strip().zfill(6)
+        code = str(r.get("code", "")).strip()
         if not code:
             continue
+
+        # 보통 6자리 숫자. 일부 알파뉴메릭 KRX 코드는 Yahoo에서 조회가 안 될 가능성이 높다.
+        code = code.zfill(6) if code.isdigit() else code.upper()
         item = dict(r)
         item["code"] = code
         rows.append(item)
 
-    # 혹시 마스터에 중복이 남아 있으면 첫 항목만 유지
     seen = set()
     out = []
     for r in rows:
@@ -79,68 +123,61 @@ def load_kr_master():
             continue
         seen.add(r["code"])
         out.append(r)
-
     return out
 
 
-def fetch_recent_market_frames():
-    from pykrx import stock
-
-    kst = now_kst()
-    frames = []
-
-    for d in range(LOOKBACK_CALENDAR_DAYS):
-        day = kst.date() - timedelta(days=d)
-        date_str = day.strftime("%Y%m%d")
-
-        try:
-            df = stock.get_market_ohlcv(date_str, market="ALL")
-        except Exception as e:
-            print(f"[KR] {date_str} fetch error: {e}")
-            time.sleep(0.3)
+def choose_quote(base_code, quote_map):
+    candidates = []
+    for suffix in (".KS", ".KQ"):
+        ysym = f"{base_code}{suffix}".upper()
+        q = quote_map.get(ysym)
+        if not q:
             continue
 
-        if df is None or len(df) == 0:
+        price = sf(q.get("regularMarketPrice"))
+        prev = sf(q.get("regularMarketPreviousClose")) or sf(q.get("regularMarketPreviousCloseRaw"))
+        volume = si(q.get("regularMarketVolume"), 0)
+        quote_type = q.get("quoteType")
+
+        if price is None:
             continue
 
-        # 거래대금이 거의 없고 종가도 없으면 휴장/미반영으로 본다.
-        if "종가" not in df.columns or "거래대금" not in df.columns:
-            continue
+        # 거래소 정보가 있으면 참고. 그래도 둘 다 있으면 거래량 있는 쪽 우선.
+        score = 0
+        if quote_type == "EQUITY":
+            score += 5
+        if prev not in (None, 0):
+            score += 5
+        if volume > 0:
+            score += 3
+        if suffix == ".KS":
+            score += 0.1
 
-        total_value = float(df["거래대금"].fillna(0).sum())
-        if total_value <= 0:
-            continue
+        candidates.append((score, suffix, q))
 
-        df = df.copy()
-        df.index = df.index.map(lambda x: str(x).zfill(6))
-        frames.append((date_str, df))
+    if not candidates:
+        return None
 
-        print(f"[KR] trading day {len(frames)}: {date_str} rows={len(df)} value={int(total_value):,}")
+    candidates.sort(key=lambda x: x[0], reverse=True)
+    return candidates[0][2]
 
-        if len(frames) >= MAX_TRADING_DAYS:
-            break
 
-        time.sleep(0.15)
-
-    # 최신순으로 모았으므로 오래된순으로 정렬
-    frames = list(reversed(frames))
-    if len(frames) < 2:
-        raise RuntimeError("KR trading frames are insufficient")
-
-    return frames
+def build_yahoo_symbol_list(codes):
+    symbols = []
+    for code in codes:
+        # Yahoo Korea는 숫자코드.KS / 숫자코드.KQ 형식만 안정적이다.
+        if code.isdigit() and len(code) == 6:
+            symbols.append(f"{code}.KS")
+            symbols.append(f"{code}.KQ")
+    return symbols
 
 
 def main():
-    try:
-        import pykrx  # noqa
-    except Exception as e:
-        raise RuntimeError("pykrx가 설치되어 있지 않습니다. requirements.txt 또는 workflow에서 pip install pykrx가 필요합니다.") from e
-
     start_utc = datetime.now(timezone.utc)
     kst = now_kst()
 
     print("=" * 70)
-    print("국장 종가 가격 수집 시작 v1 CLOSE RADAR")
+    print("국장 종가 가격 수집 시작 v2 YAHOO KR CLOSE FALLBACK")
     print("UTC:", start_utc.isoformat())
     print("KST:", kst.isoformat())
     print("=" * 70)
@@ -148,97 +185,120 @@ def main():
     master_rows = load_kr_master()
     print(f"KR 마스터 종목: {len(master_rows)}개")
 
-    frames = fetch_recent_market_frames()
-    latest_date, latest_df = frames[-1]
-    prev_date, prev_df = frames[-2]
+    codes = [r["code"] for r in master_rows]
+    yahoo_symbols = build_yahoo_symbol_list(codes)
+    print(f"Yahoo 조회 심볼: {len(yahoo_symbols)}개 (.KS/.KQ 양쪽 조회)")
 
-    # 최근 20거래일 평균 거래대금은 최신일 제외 직전 20거래일 사용
-    hist_frames = frames[:-1][-20:]
-    hist_dates = [d for d, _ in hist_frames]
+    quote_map = {}
+    batch_errors = []
+
+    for i in range(0, len(yahoo_symbols), CHUNK_SIZE):
+        chunk = yahoo_symbols[i : i + CHUNK_SIZE]
+        try:
+            quote_map.update(fetch_yahoo_quote_batch(chunk))
+            print(f"[KR Yahoo] {min(i + CHUNK_SIZE, len(yahoo_symbols))}/{len(yahoo_symbols)} symbols")
+        except Exception as e:
+            msg = f"chunk {i}-{i + len(chunk)}: {e}"
+            batch_errors.append(msg)
+            print("[KR Yahoo] batch error:", msg)
+        time.sleep(REQUEST_DELAY)
 
     kr = {}
     failures = {}
+    date_counter = {}
 
     for r in master_rows:
         code = r["code"]
         try:
-            if code not in latest_df.index:
-                failures[code] = "missing_latest"
+            q = choose_quote(code, quote_map)
+            if not q:
+                failures[code] = "yahoo_quote_missing"
                 continue
 
-            row = latest_df.loc[code]
-            close = sf(row.get("종가"))
-            volume = si(row.get("거래량"), 0)
-            value = sf(row.get("거래대금")) or 0
-
-            if code in prev_df.index:
-                prev_close = sf(prev_df.loc[code].get("종가"))
+            ysymbol = str(q.get("symbol", "")).upper()
+            price = sf(q.get("regularMarketPrice"))
+            prev_close = sf(q.get("regularMarketPreviousClose"))
+            change = sf(q.get("regularMarketChangePercent"))
+            if change is None:
+                change = pct(price, prev_close)
             else:
-                prev_close = None
+                change = round(change, 4)
 
-            change = pct(close, prev_close)
-
-            hist_values = []
-            for _, hdf in hist_frames:
-                if code in hdf.index:
-                    v = sf(hdf.loc[code].get("거래대금"))
-                    if v is not None and v > 0:
-                        hist_values.append(v)
-
-            avg20 = sum(hist_values) / len(hist_values) if len(hist_values) >= 3 else None
-            rvol = round(value / avg20, 4) if avg20 and avg20 > 0 and value > 0 else None
+            volume = si(q.get("regularMarketVolume"), 0)
+            value = round(price * volume, 2) if price is not None and volume else 0
+            market_time = q.get("regularMarketTime")
+            regular_date = ymd_dash_from_ts(market_time)
+            date_counter[regular_date] = date_counter.get(regular_date, 0) + 1
 
             kr[code] = {
                 "symbol": code,
-                "name": r.get("name", ""),
+                "yahoo_symbol": ysymbol,
+                "name": r.get("name", "") or q.get("shortName", ""),
                 "market": "KR",
-                "currency": "KRW",
+                "currency": q.get("currency", "KRW"),
+                "exchange": q.get("fullExchangeName") or q.get("exchange"),
                 "prev_close": prev_close,
-                "regular_price": close,
+                "regular_price": price,
                 "regular_change": change,
                 "regular_volume": volume,
                 "regular_dollar_volume": value,
-                "regular_avg20_dollar_volume": round(avg20, 2) if avg20 else None,
-                "regular_avg20_days": len(hist_values),
-                "regular_dollar_rvol": rvol,
-                "regular_date": ymd_dash(latest_date),
-                "price": close,
+                "regular_avg20_dollar_volume": None,
+                "regular_avg20_days": 0,
+                "regular_dollar_rvol": None,
+                "regular_market_time": market_time,
+                "regular_date": regular_date,
+                "price": price,
                 "change": change,
                 "volume": volume,
-                "source": "pykrx_market_ohlcv",
-                "data_quality": "krx_close",
+                "source": "yahoo_v7_quote_kr",
+                "data_quality": "yahoo_kr_close",
             }
 
         except Exception as e:
             failures[code] = str(e)
 
+    # 가장 많이 잡힌 날짜를 date_key로 사용한다.
+    if date_counter:
+        date_key = sorted(date_counter.items(), key=lambda x: x[1], reverse=True)[0][0]
+    else:
+        date_key = now_kst().strftime("%Y-%m-%d")
+
     output = {
-        "schema_version": "gics_close_kr_prices_v1",
+        "schema_version": "gics_close_kr_prices_v2_yahoo_quote",
         "updated_at": start_utc.isoformat(),
         "updated_at_kst": now_kst().isoformat(),
-        "date_key": ymd_dash(latest_date),
-        "previous_date_key": ymd_dash(prev_date),
-        "source": "pykrx_market_ohlcv",
+        "date_key": date_key,
+        "source": "yahoo_v7_quote_kr",
+        "note": "KR 종목은 Yahoo .KS/.KQ quote로 수집. regular_dollar_volume은 KRW 거래대금 추정값(price*volume). RVOL은 null.",
         "counts": {
             "symbols": len(master_rows),
             "ok": len(kr),
             "failed": len(failures),
-            "hist_days": len(hist_frames),
+            "quotes_returned": len(quote_map),
+            "batch_errors": len(batch_errors),
         },
-        "hist_dates": [ymd_dash(d) for d in hist_dates],
-        "failures": failures,
+        "date_counter": date_counter,
+        "batch_errors": batch_errors[:20],
+        "failures": dict(list(failures.items())[:300]),
         "kr": kr,
     }
 
     os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
     with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
-        json.dump(output, f, ensure_ascii=False)
+        json.dump(output, f, ensure_ascii=False, indent=2)
 
-    print("저장 완료:", OUTPUT_PATH)
-    print("date_key:", ymd_dash(latest_date))
-    print("previous_date_key:", ymd_dash(prev_date))
-    print("ok:", len(kr), "failed:", len(failures))
     print("=" * 70)
+    print("저장 완료:", OUTPUT_PATH)
+    print("date_key:", output["date_key"])
+    print(f"ok: {len(kr)}/{len(master_rows)}, failed: {len(failures)}")
+    print("quotes_returned:", len(quote_map))
+    if failures:
+        print("failure sample:", list(failures.items())[:20])
+    print("=" * 70)
+
+    # 일부 실패는 허용. 단 한 개도 못 받으면 실패 처리.
+    if len(kr) == 0:
+        raise RuntimeError("KR Yahoo quote fetch returned zero valid symbols")
 
 
 if __name__ == "__main__":

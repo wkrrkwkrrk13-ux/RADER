@@ -1,15 +1,18 @@
-name: Fetch Prices
+name: Fetch Close Prices
 
 on:
   workflow_dispatch:
   schedule:
-    - cron: "*/10 * * * *"
+    # KST 16:30 - 한국장 종가 반영 후
+    - cron: "30 7 * * 1-5"
+    # KST 06:30 - 미국장 종가 반영 후. 표준시/서머타임 모두 장마감 이후.
+    - cron: "30 21 * * 1-5"
 
 permissions:
   contents: write
 
 concurrency:
-  group: fetch-prices
+  group: fetch-close-prices
   cancel-in-progress: true
 
 jobs:
@@ -27,7 +30,12 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Run fetch script
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Fetch US close prices
         env:
           EODHD_API_TOKEN: ${{ secrets.EODHD_API_TOKEN }}
           EODHD_ALWAYS_VERIFY: "SPCX"
@@ -37,15 +45,18 @@ jobs:
           EODHD_CHANGE_DIFF_PCTP: "1.0"
         run: python fetch_prices.py
 
+      - name: Fetch KR close prices
+        run: python fetch_kr_prices.py
+
       - name: Commit and push if changed
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git add cache/prices.json
+          git add cache/prices.json cache/kr_prices.json
           if git diff --cached --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "Update prices cache"
+            git commit -m "Update close prices cache"
             git pull --rebase
             git push
           fi

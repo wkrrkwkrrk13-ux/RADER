@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#07111f">
-<title>GICS74 미장 자금흐름 레이더</title>
+<title>GICS 종가 자금흐름 레이더</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 :root{
-  --pageMax:1080px;
+  --pageMax:1120px;
   --bg:#07111f;
   --bg2:#0a1424;
   --surface:#101b30;
@@ -36,57 +36,29 @@ body{
   font-size:13px;
   -webkit-font-smoothing:antialiased;
 }
-
-/* 중앙 집중형 레이아웃: 웹툰처럼 가운데 세로 피드 느낌 */
-.hdr,
-.meta,
-.tab-row,
-.controls,
-.notice,
-.main,
-.footer{
+.hdr,.meta,.tab-row,.controls,.notice,.main,.footer{
   width:min(100%, var(--pageMax));
   margin-left:auto;
   margin-right:auto;
 }
-
-.hdr,
-.meta,
-.tab-row,
-.controls,
-.footer{
+.hdr,.meta,.tab-row,.controls,.footer{
   border-left:1px solid rgba(38,56,88,0.65);
   border-right:1px solid rgba(38,56,88,0.65);
 }
-
 .hdr{
-  border-radius:0 0 12px 12px;
-  box-shadow:0 10px 30px rgba(0,0,0,0.18);
-}
-.hdr{
-  position:sticky;
-  top:0;
-  z-index:100;
+  position:sticky;top:0;z-index:100;
   background:rgba(7,17,31,0.94);
   backdrop-filter:blur(12px);
   border-bottom:1px solid var(--border);
+  border-radius:0 0 12px 12px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.18);
   padding:10px 12px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
 }
 .hdr-title{font-size:19px;font-weight:950;color:var(--accent);letter-spacing:-0.6px;}
 .hdr-sub{font-size:11px;color:var(--muted);margin-top:2px;font-weight:800;}
-.creator-line{
-  margin-top:3px;
-  font-size:10px;
-  font-weight:950;
-  color:rgba(247,200,74,0.82);
-  letter-spacing:0.35px;
-  text-transform:uppercase;
-}
-.hdr-right{display:flex;gap:6px;flex-shrink:0;}
+.creator-line{margin-top:3px;font-size:10px;font-weight:950;color:rgba(247,200,74,0.82);letter-spacing:0.35px;text-transform:uppercase;}
+.hdr-right{display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;}
 .btn{
   background:var(--surface);
   border:1px solid var(--border);
@@ -102,7 +74,7 @@ body{
 .btn-csv{background:rgba(247,200,74,0.12);border-color:rgba(247,200,74,0.35);color:var(--accent);}
 .meta{
   display:grid;
-  grid-template-columns:repeat(5,1fr);
+  grid-template-columns:repeat(6,1fr);
   gap:6px;
   padding:8px 10px;
   background:var(--bg2);
@@ -129,14 +101,14 @@ body{
 .meta-value.green{color:var(--green);}
 .meta-value.warn{color:var(--warn);}
 .tab-row{
-  display:flex;
-  gap:6px;
+  display:flex;gap:6px;
   padding:8px 10px;
   background:var(--surface);
   border-bottom:1px solid var(--border);
   position:sticky;
   top:50px;
   z-index:90;
+  overflow:auto;
 }
 .tab{
   padding:7px 14px;
@@ -148,17 +120,11 @@ body{
   color:#9aa7c4;
   cursor:pointer;
   user-select:none;
+  white-space:nowrap;
 }
-.tab.active{
-  background:rgba(247,200,74,0.16);
-  border-color:rgba(247,200,74,0.45);
-  color:var(--accent);
-}
+.tab.active{background:rgba(247,200,74,0.16);border-color:rgba(247,200,74,0.45);color:var(--accent);}
 .controls{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  flex-wrap:wrap;
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
   padding:8px 10px;
   background:#081525;
   border-bottom:1px solid var(--border);
@@ -174,7 +140,7 @@ select,input{
   font-weight:800;
   min-width:120px;
 }
-input{min-width:180px;}
+input{min-width:220px;}
 .notice{
   margin-top:10px;
   padding:8px 10px;
@@ -187,22 +153,7 @@ input{min-width:180px;}
   line-height:1.45;
 }
 .notice.hidden{display:none;}
-.main{
-  padding:10px 0 18px;
-}
-.main > .table-wrap{
-  margin-left:0;
-  margin-right:0;
-}
-
-.stock-table{min-width:820px;}
-.stock-table th,
-.stock-table td{padding-left:5px;padding-right:5px;}
-.stock-table th:nth-child(1),
-.stock-table td:nth-child(1){min-width:160px;max-width:210px;}
-.stock-table th:nth-child(4),
-.stock-table td:nth-child(4){min-width:170px;max-width:250px;}
-
+.main{padding:10px 0 18px;}
 .table-wrap{
   background:#0c1627;
   border:1px solid var(--border);
@@ -210,11 +161,9 @@ input{min-width:180px;}
   overflow:auto;
   box-shadow:0 12px 28px rgba(0,0,0,0.22), 0 0 0 1px #0a1728;
 }
-table{width:100%;border-collapse:collapse;min-width:920px;}
+table{width:100%;border-collapse:collapse;min-width:980px;}
 th{
-  position:sticky;
-  top:0;
-  z-index:10;
+  position:sticky;top:0;z-index:10;
   background:#162541;
   color:#dfe8ff;
   font-size:11px;
@@ -224,190 +173,167 @@ th{
   padding:7px 7px;
   white-space:nowrap;
 }
-th:first-child,th:nth-child(2),th:nth-child(3),th:nth-child(4){text-align:left;}
+th:first-child,th:nth-child(2),th:nth-child(3){text-align:left;}
 td{
-  padding:6px 6px;
+  padding:6px 7px;
   border-bottom:1px solid #12213a;
   font-size:13px;
   font-weight:800;
   text-align:right;
   white-space:nowrap;
 }
-td:first-child,td:nth-child(2),td:nth-child(3),td:nth-child(4){text-align:left;}
+td:first-child,td:nth-child(2),td:nth-child(3){text-align:left;}
 tr:hover td{background:rgba(255,255,255,0.025);}
-.rank{
-  font-size:17px;
-  font-weight:950;
-  color:var(--gold);
-  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
-}
-.rank.top3{color:#fff;text-shadow:0 0 10px rgba(247,200,74,0.6);}
-.hts{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  min-width:32px;
-  padding:2px 6px;
-  border-radius:7px;
-  font-size:12px;
-  font-weight:950;
-  color:#07111f;
-  background:var(--accent);
-}
-.hts.none{
-  color:var(--muted2);
-  background:#17233a;
-  border:1px solid #263858;
-}
-.industry-en{font-size:13px;font-weight:950;color:#fff;max-width:330px;overflow:hidden;text-overflow:ellipsis;}
-.industry-kr{font-size:11px;font-weight:900;color:#9fc4ee;margin-top:1px;}
-.good{color:var(--up)!important;}
-.bad{color:var(--down)!important;}
-.flat{color:#9aa7c4!important;}
-.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;}
-.small{font-size:11px;color:var(--muted);font-weight:800;}
+.rank{font-size:12px;font-weight:950;color:var(--accent);}
+.code{font-size:11px;color:var(--muted2);font-weight:900;}
+.name{font-weight:950;}
+.sub{display:block;font-size:10px;color:var(--muted2);margin-top:2px;font-weight:800;}
+.mono{font-variant-numeric:tabular-nums;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;}
+.good{color:var(--up);}
+.bad{color:var(--down);}
+.flat{color:var(--muted);}
+.score-cell{color:var(--gold);font-weight:950;}
 .badge{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
+  display:inline-block;
   padding:2px 6px;
-  border-radius:7px;
-  background:#17233a;
-  border:1px solid #263858;
-  color:#b7c4e0;
-  font-size:11px;
-  font-weight:900;
+  border-radius:999px;
+  border:1px solid var(--border2);
+  font-size:10px;
+  font-weight:950;
+  color:#b8c5df;
+  background:rgba(255,255,255,0.04);
 }
-.badge.ok{background:rgba(127,217,127,0.1);border-color:rgba(127,217,127,0.35);color:var(--green);}
-.badge.no{background:rgba(255,176,32,0.08);border-color:rgba(255,176,32,0.32);color:#ffd27a;}
-.empty{
-  padding:30px 10px;
-  text-align:center;
-  color:var(--muted2);
-  font-size:13px;
-  font-weight:900;
-}
-.overlay{
-  position:fixed;
-  inset:0;
-  background:rgba(7,17,31,0.96);
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  z-index:999;
-  gap:14px;
-}
-.overlay.hidden{display:none;}
-.spin{
-  width:42px;
-  height:42px;
-  border:3px solid var(--border);
-  border-top-color:var(--accent);
-  border-radius:50%;
-  animation:spin 0.6s linear infinite;
-}
-@keyframes spin{to{transform:rotate(360deg);}}
-.spin-txt{font-size:13px;font-weight:900;color:var(--accent);}
+.badge.us{color:#9ed0ff;border-color:rgba(43,149,255,0.35);background:rgba(43,149,255,0.08);}
+.badge.kr{color:#ffb6c1;border-color:rgba(255,77,103,0.35);background:rgba(255,77,103,0.08);}
+.badge.ok{color:#9af09a;border-color:rgba(127,217,127,0.35);background:rgba(127,217,127,0.08);}
+.badge.warn{color:#ffd27a;border-color:rgba(255,176,32,0.35);background:rgba(255,176,32,0.08);}
 .footer{
-  text-align:center;
+  padding:12px 10px 26px;
+  color:var(--muted2);
   font-size:11px;
-  color:var(--muted);
-  padding:10px;
-  border-top:1px solid var(--border);
-  background:var(--surface);
+  font-weight:800;
+  line-height:1.5;
 }
-@media(max-width:760px){
+.empty{
+  padding:36px 14px;
+  text-align:center;
+  color:var(--muted);
+  font-weight:900;
+}
+.card-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+  margin-bottom:10px;
+}
+.info-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:10px;
+}
+.info-title{font-size:12px;color:var(--muted);font-weight:950;}
+.info-value{margin-top:5px;font-size:18px;font-weight:950;color:var(--accent);}
+.info-desc{margin-top:4px;font-size:11px;color:var(--muted2);font-weight:800;}
+@media(max-width:720px){
   :root{--pageMax:100%;}
   body{font-size:12px;}
-  .hdr,
-  .meta,
-  .tab-row,
-  .controls,
-  .footer{
-    border-left:0;
-    border-right:0;
-    border-radius:0;
-  }
-  .main{padding-left:8px;padding-right:8px;}
-  .hdr-title{font-size:16px;}
-  .hdr-sub{font-size:9px;}
-  .btn{padding:6px 8px;font-size:11px;}
+  .hdr{align-items:flex-start;position:relative;}
+  .hdr-title{font-size:17px;}
+  .hdr-right{width:100%;}
   .meta{grid-template-columns:repeat(2,1fr);}
-  .tab-row{top:49px;overflow-x:auto;}
-  .tab{flex-shrink:0;}
-  .controls{overflow-x:auto;flex-wrap:nowrap;}
-  table{min-width:820px;}
+  .tab-row{top:0;position:relative;}
+  .card-grid{grid-template-columns:1fr;}
+  table{min-width:930px;}
+  input{min-width:160px;}
 }
-.score-cell{color:var(--gold);font-weight:900;}
 </style>
 </head>
 <body>
-
-<div class="overlay" id="ov">
-  <div class="spin"></div>
-  <div class="spin-txt" id="ovTxt">데이터 불러오는 중...</div>
-</div>
-
-<div class="hdr">
+<header class="hdr">
   <div>
-    <div class="hdr-title">📡 GICS74 미장 자금흐름 레이더</div>
-    <div class="hdr-sub" id="hdrSub">미장 74개 Industry · HTS 관종 매칭 62개 · 국장 종목 매핑 제거</div>
+    <div class="hdr-title">GICS 종가 자금흐름 레이더</div>
+    <div class="hdr-sub">전일 미장 종가 × 다음날 국장 종가 · 11/25/74분류 비교</div>
     <div class="creator-line">Built by HJS</div>
   </div>
   <div class="hdr-right">
-    <button class="btn btn-csv" onclick="downloadCSV()">⬇ CSV</button>
-    <button class="btn" id="refBtn" onclick="loadData(true)">🔄 새로고침</button>
+    <button class="btn" id="reloadBtn" onclick="loadAll(true)">새로고침</button>
+    <button class="btn btn-csv" onclick="downloadCSV()">CSV 저장</button>
   </div>
-</div>
+</header>
 
-<div class="meta">
-  <div class="meta-card"><div class="meta-label">세션</div><div class="meta-value accent" id="mSession">—</div></div>
-  <div class="meta-card"><div class="meta-label">본장 기준일</div><div class="meta-value" id="mDate">—</div></div>
-  <div class="meta-card"><div class="meta-label">본장 확정</div><div class="meta-value" id="mLocked">—</div></div>
-  <div class="meta-card"><div class="meta-label">업데이트</div><div class="meta-value" id="mUpdated">—</div></div>
-  <div class="meta-card"><div class="meta-label">조회 상태</div><div class="meta-value" id="mCounts">—</div></div>
-</div>
+<section class="meta" id="meta"></section>
 
-<div class="tab-row">
-  <div class="tab active" data-tab="regular" onclick="setTab('regular')">🏁 본장 자금흐름</div>
-  <div class="tab" data-tab="live" onclick="setTab('live')">⚡ 실시간 흐름</div>
-  <div class="tab" data-tab="stocks" onclick="setTab('stocks')">🔎 미장 종목</div>
-  <div class="tab" data-tab="status" onclick="setTab('status')">🧪 데이터 상태</div>
-</div>
+<nav class="tab-row">
+  <button class="tab active" data-tab="follow" onclick="setTab('follow')">미장→국장 추종</button>
+  <button class="tab" data-tab="us" onclick="setTab('us')">미장 종가</button>
+  <button class="tab" data-tab="kr" onclick="setTab('kr')">국장 종가</button>
+  <button class="tab" data-tab="stocks" onclick="setTab('stocks')">종목 검색</button>
+</nav>
 
-<div class="controls" id="controls"></div>
+<section class="controls">
+  <span class="control-label">분류 단계</span>
+  <select id="levelSel" onchange="state.level=this.value; render()">
+    <option value="11">11분류</option>
+    <option value="25">25분류</option>
+    <option value="74" selected>74분류</option>
+  </select>
+
+  <span class="control-label">정렬</span>
+  <select id="sortSel" onchange="state.sort=this.value; render()">
+    <option value="follow">추종점수</option>
+    <option value="score">종합점수</option>
+    <option value="dollar_share">거래대금비중</option>
+    <option value="rvol">RVOL</option>
+    <option value="weighted">가중등락</option>
+    <option value="us_rank">미장순위</option>
+    <option value="kr_rank">국장순위</option>
+  </select>
+
+  <span class="control-label">검색</span>
+  <input id="searchInput" placeholder="섹터명 / 종목명 / 코드 검색" oninput="state.search=this.value.trim(); render()">
+</section>
+
 <div class="notice hidden" id="notice"></div>
-<div class="main" id="main"></div>
-<div class="footer" id="footer"></div>
+<main class="main" id="main"></main>
+<footer class="footer">
+  실시간 탭은 제거했습니다. 이 레이더는 정규장 종가 스냅샷만 사용합니다. 미장과 국장은 절대 거래대금이 아니라 각 시장 내부 점수·순위·비중으로 비교합니다.
+</footer>
 
 <script>
-let sectors = [];
-let prices = null;
+const REPO_RAW = 'https://raw.githubusercontent.com/wkrrkwkrrk13-ux/RADER/main/';
+const URLS = {
+  master: [REPO_RAW + 'GICS_통합마스터_관종번호순.json', './GICS_통합마스터_관종번호순.json'],
+  us: [REPO_RAW + 'cache/prices.json', './cache/prices.json'],
+  kr: [REPO_RAW + 'cache/kr_prices.json', './cache/kr_prices.json']
+};
 
-// 가격 캐시는 Vercel 정적 파일이 아니라 GitHub 원본을 우선 조회한다.
-// 이유: GitHub Actions는 cache/prices.json을 갱신하지만,
-// Vercel 정적 배포가 늦거나 생략되면 ./cache/prices.json이 오래된 값으로 멈출 수 있음.
-const GITHUB_RAW_CACHE_URL = 'https://raw.githubusercontent.com/wkrrkwkrrk13-ux/RADER/main/cache/prices.json';
-const LOCAL_CACHE_URL = './cache/prices.json';
+const state = {
+  tab:'follow',
+  level:'74',
+  sort:'follow',
+  search:''
+};
 
-let activeTab = 'regular';
-let sortMode = 'score';
-let stockMode = 'regular';
-let stockIndustry = '__ALL__';
-let stockSearch = '';
+let master = null;
+let records = [];
+let usCache = null;
+let krCache = null;
+let lastRows = [];
 
-const SESSION_LABEL = {
-  pre: '프리장',
-  regular: '본장',
-  after: '애프터장',
-  closed: '장마감/휴장'
+const LEVELS = {
+  '11': {code:'sector_code', name:'sector', label:'11분류'},
+  '25': {code:'industry_group_code', name:'industry_group', label:'25분류'},
+  '74': {code:'industry_code', name:'industry', label:'74분류'}
 };
 
 function cls(v){
   if(v > 0) return 'good';
   if(v < 0) return 'bad';
   return 'flat';
+}
+function esc(s){
+  return String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 }
 function fmtPct(v){
   if(v === null || v === undefined || !isFinite(v)) return '—';
@@ -416,894 +342,555 @@ function fmtPct(v){
 }
 function fmtNum(v, digits=0){
   if(v === null || v === undefined || !isFinite(v)) return '—';
-  return Number(v).toLocaleString('en-US', {maximumFractionDigits:digits, minimumFractionDigits:digits});
-}
-function fmtRvol(v){
-  if(v === null || v === undefined || !isFinite(v)) return '—';
-  return `${Number(v).toFixed(2)}x`;
+  return Number(v).toLocaleString('ko-KR', {maximumFractionDigits:digits, minimumFractionDigits:digits});
 }
 function fmtScore(v){
   if(v === null || v === undefined || !isFinite(v)) return '—';
   return Number(v).toFixed(1);
 }
-function fmtMoney(v){
+function fmtRvol(v){
+  if(v === null || v === undefined || !isFinite(v)) return '—';
+  return `${Number(v).toFixed(2)}x`;
+}
+function fmtMoney(v, market){
   if(v === null || v === undefined || !isFinite(v) || v <= 0) return '—';
   const abs = Math.abs(v);
+  if(market === 'KR'){
+    if(abs >= 1e12) return `${(v/1e12).toFixed(2)}조`;
+    if(abs >= 1e8) return `${(v/1e8).toFixed(1)}억`;
+    return `${fmtNum(v,0)}원`;
+  }
   if(abs >= 1e12) return `$${(v/1e12).toFixed(2)}T`;
   if(abs >= 1e9) return `$${(v/1e9).toFixed(2)}B`;
   if(abs >= 1e6) return `$${(v/1e6).toFixed(1)}M`;
   return `$${fmtNum(v,0)}`;
 }
-function esc(s){
-  return String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-}
 function cacheBust(url, force=false){
   return force ? `${url}?t=${Date.now()}` : `${url}?t=${Math.floor(Date.now()/60000)}`;
 }
-async function fetchJSON(url, force=false){
-  const res = await fetch(cacheBust(url, force), {cache:'no-store'});
-  if(!res.ok) throw new Error(`${url} ${res.status}`);
-  return await res.json();
-}
-
-async function fetchPricesJSON(force=false){
-  // 1순위: GitHub Actions가 직접 갱신하는 원본 캐시
-  try{
-    return await fetchJSON(GITHUB_RAW_CACHE_URL, true);
-  }catch(e){
-    console.warn('GitHub raw cache fetch failed, falling back to local cache:', e);
-  }
-
-  // 2순위: Vercel에 배포된 로컬 캐시
-  return await fetchJSON(LOCAL_CACHE_URL, force);
-}
-
-function cacheAgeMinutes(priceData){
-  if(!priceData?.updated_at) return Infinity;
-  const t = new Date(priceData.updated_at).getTime();
-  if(!isFinite(t)) return Infinity;
-  return (Date.now() - t) / 60000;
-}
-
-function nyDateKey(){
-  try{
-    return new Intl.DateTimeFormat('en-CA', {
-      timeZone:'America/New_York',
-      year:'numeric',
-      month:'2-digit',
-      day:'2-digit'
-    }).format(new Date());
-  }catch(e){
-    return new Date().toISOString().slice(0,10);
-  }
-}
-
-function uniqueSymbolsFromSectors(sectorData){
-  const set = new Set();
-  for(const s of sectorData || []){
-    for(const t of s.tickers || []){
-      if(t.ticker) set.add(String(t.ticker).toUpperCase());
-    }
-  }
-  return Array.from(set).sort();
-}
-
-function metaBySymbolFromSectors(sectorData){
-  const m = {};
-  for(const s of sectorData || []){
-    for(const t of s.tickers || []){
-      const sym = String(t.ticker || '').toUpperCase();
-      if(!sym) continue;
-      m[sym] = {
-        display_ticker: t.display_ticker || t.ticker,
-        name: t.name || '',
-        market_cap_usd: t.market_cap_usd || 0,
-        gics11: s.gics11 || '',
-        industry: s.industry || ''
-      };
-    }
-  }
-  return m;
-}
-
-async function fetchLivePricesFromApi(sectorData, oldPrices=null){
-  const symbols = uniqueSymbolsFromSectors(sectorData);
-  const metaMap = metaBySymbolFromSectors(sectorData);
-  const us = {};
-  const failures = {};
-  let session = null;
-
-  const ovTxt = document.getElementById('ovTxt');
-  const chunks = [];
-  for(let i=0;i<symbols.length;i+=20) chunks.push(symbols.slice(i,i+20));
-
-  for(let i=0;i<chunks.length;i++){
-    const chunk = chunks[i];
-    if(ovTxt) ovTxt.textContent = `캐시가 오래되어 실시간 재조회 중... ${i*20}/${symbols.length}`;
-
+async function fetchJSONFrom(urls, force=false, optional=false){
+  let lastErr = null;
+  for(const url of urls){
     try{
-      const url = `/api/quote?symbols=${encodeURIComponent(chunk.join(','))}`;
-      const data = await fetchJSON(url, true);
-
-      for(const sym of chunk){
-        const q = data?.[sym];
-        const meta = metaMap[sym] || {};
-        if(!q || q.error){
-          failures[sym] = q?.error || 'api quote missing';
-          continue;
-        }
-
-        session = session || q.session || oldPrices?.session || 'closed';
-
-        const regularPrice = Number(q.price ?? q.regular_price ?? q.live_price ?? 0);
-        const regularChange = Number(q.change ?? q.regular_change ?? q.live_change ?? 0);
-        const regularVolume = Number(q.volume ?? q.regular_volume ?? 0);
-        const livePrice = Number(q.live_price ?? regularPrice);
-        const liveChange = Number(q.live_change ?? regularChange);
-        const liveVolume = session === 'regular' ? regularVolume : Number(q.live_volume ?? 0);
-
-        us[sym] = {
-          symbol: sym,
-          display_ticker: meta.display_ticker || sym,
-          name: meta.name || '',
-          gics11: meta.gics11 || '',
-          industry: meta.industry || '',
-          market_cap_usd: meta.market_cap_usd || 0,
-          currency: 'USD',
-
-          prev_close: q.meta_prev_close ?? null,
-          regular_price: regularPrice,
-          regular_change: regularChange,
-          regular_volume: regularVolume,
-          regular_dollar_volume: regularPrice && regularVolume ? regularPrice * regularVolume : 0,
-
-          pre_price: null,
-          pre_change: null,
-          pre_volume: 0,
-          post_price: null,
-          post_change: null,
-          post_volume: 0,
-
-          live_session: session,
-          live_price: livePrice,
-          live_change: liveChange,
-          live_volume: liveVolume,
-          live_dollar_volume: livePrice && liveVolume ? livePrice * liveVolume : 0,
-
-          price: regularPrice,
-          change: regularChange,
-          volume: regularVolume,
-          source: q.source ? `vercel_api_${q.source}` : 'vercel_api_quote'
-        };
-      }
+      const res = await fetch(cacheBust(url, force), {cache:'no-store'});
+      if(!res.ok) throw new Error(`${res.status}`);
+      return await res.json();
     }catch(e){
-      for(const sym of chunk) failures[sym] = String(e.message || e);
+      lastErr = e;
+      console.warn('fetch failed', url, e);
     }
   }
-
-  if(ovTxt) ovTxt.textContent = '데이터 불러오는 중...';
-
-  const now = new Date();
-  const ok = Object.keys(us).length;
-  const failed = Object.keys(failures).length;
-  const finalSession = session || oldPrices?.session || 'closed';
-
-  return {
-    schema_version: 'gics74_prices_v2_api_fallback',
-    updated_at: now.toISOString(),
-    updated_at_kst: now.toISOString(),
-    date_key: nyDateKey(),
-    session: finalSession,
-    is_us_dst: oldPrices?.is_us_dst ?? true,
-    regular_final_locked: finalSession !== 'regular',
-    source: 'vercel_api_quote_fallback',
-    counts: {
-      sectors: sectorData.length,
-      symbols: symbols.length,
-      ok,
-      failed
-    },
-    failures,
-    us
-  };
+  if(optional) return null;
+  throw lastErr || new Error('fetch failed');
 }
-
-function mergeFinalCacheWithLive(cacheData, liveData, sectorData){
-  // 핵심 원칙:
-  // - 본장 진행 중에는 '본장 자금흐름'을 전일 확정값으로 고정
-  // - 실시간 탭만 현재 본장/프리/애프터 데이터로 갱신
-  // - 애프터장 이후에는 live의 regular_*를 당일 본장 확정값으로 쓸 수 있음
-
-  const cache = cacheData || {};
-  const live = liveData || {};
-  const cacheUs = cache.us || {};
-  const liveUs = live.us || {};
-  const symbols = uniqueSymbolsFromSectors(sectorData);
-
-  const liveSession = live.session || cache.session || 'closed';
-  const liveDate = live.date_key || nyDateKey();
-  const cacheDate = cache.date_key || liveDate;
-
-  const useLiveAsRegularFinal =
-    live.source === 'vercel_api_quote_fallback' &&
-    (liveSession === 'after' || (liveSession === 'closed' && liveDate !== cacheDate));
-
-  const mergedUs = {};
-  const liveFailures = Object.assign({}, live.failures || {});
-  const failures = {};
-  let ok = 0;
-
-  for(const sym of symbols){
-    const base = cacheUs[sym] || {};
-    const cur = liveUs[sym] || null;
-
-    let item;
-
-    if(useLiveAsRegularFinal && cur){
-      // 애프터장/마감 이후라면 현재 regular_*가 그날 본장 확정값
-      item = Object.assign({}, base, cur);
-      item.live_valid = true;
-    }else{
-      // 프리장/본장 중에는 regular_*는 캐시의 전일 확정값 유지
-      item = Object.assign({}, base);
-
-      if(cur){
-        // 실시간 API가 성공한 종목만 live_*를 갱신한다.
-        item.live_valid = true;
-        item.live_session = liveSession;
-        item.live_price = cur.live_price ?? cur.regular_price ?? cur.price;
-        item.live_change = cur.live_change ?? cur.regular_change ?? cur.change;
-        item.live_volume = cur.live_volume ?? 0;
-        item.live_dollar_volume = cur.live_dollar_volume ?? 0;
-
-        // 메타는 최신값 보완
-        item.source = 'regular_cache_plus_live_api';
-      }else{
-        // 핵심 수정:
-        // 실시간 API가 실패한 종목은 전일 live/regular 값을 실시간 흐름에 절대 섞지 않는다.
-        // 본장 자금흐름 탭에서는 regular_* 캐시를 계속 쓰지만,
-        // 실시간 흐름 탭에서는 getField()에서 제외된다.
-        item.live_valid = false;
-        item.live_session = liveSession;
-        item.live_price = null;
-        item.live_change = null;
-        item.live_volume = 0;
-        item.live_dollar_volume = 0;
-      }
-    }
-
-    if(item && (item.regular_price !== undefined || item.price !== undefined)){
-      // 캐시가 있으면 API 실시간 보충 실패여도 본장 확정 데이터는 정상으로 본다.
-      mergedUs[sym] = item;
-      ok += 1;
-    }else if(cur){
-      // 캐시에 없는데 API만 있는 경우는 예외적으로 API값 사용
-      mergedUs[sym] = cur;
-      ok += 1;
-    }else{
-      // 진짜 실패: 캐시도 없고 API도 없음
-      failures[sym] = 'missing cache and live quote';
-    }
-  }
-
-  return {
-    schema_version: 'gics74_prices_v2_merged_final_live',
-    updated_at: live.updated_at || cache.updated_at || new Date().toISOString(),
-    updated_at_kst: live.updated_at || cache.updated_at_kst || cache.updated_at || new Date().toISOString(),
-    date_key: useLiveAsRegularFinal ? liveDate : cacheDate,
-    session: liveSession,
-    is_us_dst: live.is_us_dst ?? cache.is_us_dst ?? true,
-    regular_final_locked: true,
-    source: useLiveAsRegularFinal ? 'api_regular_final_after_close' : 'regular_cache_plus_live_api',
-    counts: {
-      sectors: sectorData.length,
-      symbols: symbols.length,
-      ok,
-      failed: Object.keys(failures).length,
-      live_ok: live.counts?.ok ?? 0,
-      live_failed: Object.keys(liveFailures).length
-    },
-    failures,
-    live_failures: liveFailures,
-    us: mergedUs
-  };
+function showNotice(msg){
+  const el = document.getElementById('notice');
+  if(!msg){el.classList.add('hidden'); el.innerHTML=''; return;}
+  el.classList.remove('hidden');
+  el.innerHTML = msg;
 }
-function getQuote(ticker, displayTicker){
-  const us = prices?.us || {};
-  return us[ticker] || us[displayTicker] || null;
+function normalizeRecords(rows){
+  // 방어용: 혹시 마스터에 파두 중복이 남아 있으면 전자장비 섹터외 파두를 제거한다.
+  const filtered = (rows || []).filter(r => !(r.market==='KR' && r.code==='440110' && r.industry_code==='452030' && r.sub_industry==='섹터외'));
+  return filtered.map(r => ({
+    market: r.market,
+    watchlist_no: r.watchlist_no ?? '',
+    sector_code: String(r.sector_code ?? ''),
+    sector: r.sector ?? '',
+    industry_group_code: String(r.industry_group_code ?? ''),
+    industry_group: r.industry_group ?? '',
+    industry_code: String(r.industry_code ?? ''),
+    industry: r.industry ?? '',
+    sub_industry: r.sub_industry ?? '',
+    code: String(r.code ?? '').trim().toUpperCase(),
+    name: r.name ?? ''
+  }));
 }
-function getField(q, mode){
+function priceMap(market){
+  return market === 'US' ? (usCache?.us || {}) : (krCache?.kr || {});
+}
+function getPrice(market, code){
+  const m = priceMap(market);
+  let q = m[code];
+  if(!q && market === 'KR') q = m[String(code).padStart(6,'0')];
   if(!q) return null;
 
-  if(mode === 'regular'){
-    const price = Number(q.regular_price ?? q.price ?? q.live_price);
-    const change = Number(q.regular_change ?? q.change ?? q.live_change);
-    const volume = Number(q.regular_volume ?? q.volume ?? 0);
-    let dollar = Number(q.regular_dollar_volume ?? 0);
-    if(!dollar && price && volume) dollar = price * volume;
-    const avgDollar = Number(q.regular_avg20_dollar_volume ?? 0);
-    const rvol = avgDollar > 0 && dollar > 0 ? dollar / avgDollar : null;
-    return {price, change, volume, dollar, avgDollar, rvol, weightType:'거래대금'};
-  }
-
-  // 실시간 탭에서는 live API가 성공한 종목만 사용한다.
-  // 실패 종목을 전일 regular/live 값으로 대체하면 SPCX 같은 왜곡이 생긴다.
-  if(q.live_valid === false) return null;
-
-  const price = Number(q.live_price);
-  const change = Number(q.live_change);
-  const liveVol = Number(q.live_volume ?? 0);
-  const regularPrice = Number(q.regular_price ?? q.price ?? 0);
-  const regularVol = Number(q.regular_volume ?? q.volume ?? 0);
+  const price = Number(q.regular_price ?? q.price);
+  const change = Number(q.regular_change ?? q.change);
+  const volume = Number(q.regular_volume ?? q.volume ?? 0);
+  let dollar = Number(q.regular_dollar_volume ?? q.dollar_volume ?? 0);
+  const avg20 = Number(q.regular_avg20_dollar_volume ?? 0);
+  const rvol = avg20 > 0 && dollar > 0 ? dollar / avg20 : Number(q.regular_dollar_rvol ?? NaN);
 
   if(!isFinite(price) || !isFinite(change)) return null;
-
-  // 1순위: 현재 세션에서 실제로 잡힌 실시간 거래대금
-  let liveDollar = Number(q.live_dollar_volume ?? 0);
-  if(!liveDollar && price && liveVol) liveDollar = price * liveVol;
-
-  // 2순위: 현재 가격은 성공했는데 실시간 거래량만 없을 때, 가중치만 전일 본장 거래대금으로 대체
-  // 가격/등락률은 절대 전일값으로 대체하지 않는다.
-  let regularDollar = Number(q.regular_dollar_volume ?? 0);
-  if(!regularDollar && regularPrice && regularVol) regularDollar = regularPrice * regularVol;
-
-  const avgDollar = Number(q.regular_avg20_dollar_volume ?? 0);
-
-  if(liveDollar > 0){
-    const rvol = avgDollar > 0 ? liveDollar / avgDollar : null;
-    return {price, change, volume:liveVol, dollar:liveDollar, avgDollar, rvol, weightType:'실시간거래대금'};
-  }
-
-  if(regularDollar > 0){
-    const rvol = avgDollar > 0 ? regularDollar / avgDollar : null;
-    return {price, change, volume:liveVol, dollar:regularDollar, avgDollar, rvol, weightType:'전일거래대금대체'};
-  }
-
-  // 3순위: 그래도 없을 때만 시총으로 대체
-  return {price, change, volume:liveVol, dollar:0, avgDollar, rvol:null, weightType:'시총대체'};
+  return {price, change, volume, dollar, avg20, rvol};
 }
-function sectorMetrics(mode='regular'){
-  const rows = [];
+function groupRecords(market, level){
+  const def = LEVELS[level];
+  const q = state.search.toLowerCase();
+  const map = new Map();
 
-  for(const s of sectors){
-    let valid = 0;
-    let up = 0;
-    let down = 0;
-    let flat = 0;
-    let weightedSum = 0;
-    let weightSum = 0;
-    let dollarSum = 0;
-    let avgDollarSum = 0;
-    let positiveDollar = 0;
-    let negativeDollar = 0;
-    let marketCapSum = 0;
-    let liveDollarCount = 0;
-    let regularFallbackCount = 0;
-    let marketCapFallbackCount = 0;
-
-    for(const t of (s.tickers || [])){
-      const q = getQuote(t.ticker, t.display_ticker);
-      const f = getField(q, mode);
-      const marketCap = Number(t.market_cap_usd || q?.market_cap_usd || 0);
-      marketCapSum += marketCap;
-
-      if(!q || !f || !isFinite(f.change)) continue;
-
-      valid += 1;
-      if(f.change > 0) up += 1;
-      else if(f.change < 0) down += 1;
-      else flat += 1;
-
-      const weight = f.dollar > 0 ? f.dollar : marketCap;
-      if(weight > 0){
-        weightedSum += f.change * weight;
-        weightSum += weight;
-      }
-
-      if(f.weightType === '실시간거래대금') liveDollarCount += 1;
-      else if(f.weightType === '전일거래대금대체') regularFallbackCount += 1;
-      else if(f.weightType === '시총대체') marketCapFallbackCount += 1;
-
-      if(f.dollar > 0){
-        dollarSum += f.dollar;
-        if(f.change > 0) positiveDollar += f.dollar;
-        else if(f.change < 0) negativeDollar += f.dollar;
-      }
-
-      if(f.avgDollar > 0){
-        avgDollarSum += f.avgDollar;
-      }
+  for(const r of records){
+    if(r.market !== market) continue;
+    if(q){
+      const hay = `${r.sector} ${r.industry_group} ${r.industry} ${r.sub_industry} ${r.code} ${r.name}`.toLowerCase();
+      if(!hay.includes(q)) continue;
     }
-
-    const weightedChange = weightSum > 0 ? weightedSum / weightSum : 0;
-    const breadth = valid > 0 ? up / valid : 0;
-    const downBreadth = valid > 0 ? down / valid : 0;
-    const netDollar = positiveDollar - negativeDollar;
-    const dollarBias = dollarSum > 0 ? netDollar / dollarSum * 100 : null;
-    const sectorRvol = avgDollarSum > 0 ? dollarSum / avgDollarSum : null;
-
-    rows.push({
-      id:s.id,
-      gics11:s.gics11,
-      industry:s.industry,
-      kr:s.kr,
-      hts_no:s.hts_no,
-      hts_name:s.hts_name,
-      has_kr_watchlist:!!s.has_kr_watchlist,
-      ticker_count:(s.tickers || []).length,
-      valid,
-      up,
-      down,
-      flat,
-      weighted_change:weightedChange,
-      breadth,
-      down_breadth:downBreadth,
-      dollar_volume:dollarSum,
-      avg20_dollar_volume:avgDollarSum,
-      sector_rvol:sectorRvol,
-      score:0,
-      dollar_score:0,
-      rvol_score:0,
-      breadth_score:0,
-      weighted_score:0,
-      net_score:0,
-      positive_dollar:positiveDollar,
-      negative_dollar:negativeDollar,
-      net_dollar:netDollar,
-      dollar_bias:dollarBias,
-      market_cap_usd:marketCapSum,
-      live_dollar_count:liveDollarCount,
-      regular_fallback_count:regularFallbackCount,
-      marketcap_fallback_count:marketCapFallbackCount,
-      weight_note: mode === 'regular'
-        ? '거래대금'
-        : (liveDollarCount > 0
-            ? '실시간거래대금'
-            : (regularFallbackCount > 0 ? '전일거래대금대체' : '시총대체'))
-    });
-  }
-
-  // 종합점수: 거래대금 30 + RVOL 25 + 상승비율 20 + 가중등락 20 + 순매수성 5
-  // 단위가 서로 다르므로 모두 0~100점으로 변환한 뒤 합산한다.
-  const validRows = rows.filter(r => r.valid > 0);
-
-  const logDollars = validRows.map(r => Math.log10(Math.max(r.dollar_volume || 0, 1)));
-  const minLogDollar = Math.min(...logDollars);
-  const maxLogDollar = Math.max(...logDollars);
-  const dollarRange = maxLogDollar - minLogDollar;
-
-  for(const r of rows){
-    const logDollar = Math.log10(Math.max(r.dollar_volume || 0, 1));
-    r.dollar_score = dollarRange > 0 ? ((logDollar - minLogDollar) / dollarRange * 100) : 0;
-
-    // RVOL: 1배=33점, 2배=67점, 3배 이상=100점으로 캡
-    r.rvol_score = r.sector_rvol ? Math.max(0, Math.min(100, r.sector_rvol / 3 * 100)) : 0;
-
-    r.breadth_score = Math.max(0, Math.min(100, (r.breadth || 0) * 100));
-
-    // 가중등락: -3% 이하는 0점, +7% 이상은 100점
-    r.weighted_score = Math.max(0, Math.min(100, ((r.weighted_change || 0) + 3) / 10 * 100));
-
-    // 순매수성: dollar_bias -100~+100을 0~100으로 변환
-    r.net_score = r.dollar_bias === null || r.dollar_bias === undefined
-      ? 0
-      : Math.max(0, Math.min(100, (r.dollar_bias + 100) / 2));
-
-    r.score =
-      r.dollar_score * 0.30 +
-      r.rvol_score * 0.25 +
-      r.breadth_score * 0.20 +
-      r.weighted_score * 0.20 +
-      r.net_score * 0.05;
-  }
-
-  const sorter = {
-    score:(a,b)=> (b.score - a.score) || (b.dollar_volume - a.dollar_volume),
-    weighted:(a,b)=> (b.weighted_change - a.weighted_change) || (b.dollar_volume - a.dollar_volume),
-    dollar:(a,b)=> (b.dollar_volume - a.dollar_volume) || (b.breadth - a.breadth) || (b.weighted_change - a.weighted_change),
-    rvol:(a,b)=> ((b.sector_rvol || 0) - (a.sector_rvol || 0)) || (b.dollar_volume - a.dollar_volume),
-    breadth:(a,b)=> (b.breadth - a.breadth) || (b.weighted_change - a.weighted_change),
-    netdollar:(a,b)=> (b.net_dollar - a.net_dollar) || (b.weighted_change - a.weighted_change),
-    hts:(a,b)=> {
-      const ax = a.hts_no === null || a.hts_no === undefined ? 999 : Number(a.hts_no);
-      const bx = b.hts_no === null || b.hts_no === undefined ? 999 : Number(b.hts_no);
-      return ax - bx;
-    }
-  }[sortMode] || ((a,b)=>b.weighted_change-a.weighted_change);
-
-  rows.sort(sorter);
-  rows.forEach((r,i)=>r.rank=i+1);
-  return rows;
-}
-function stockRows(){
-  const rows = [];
-
-  for(const s of sectors){
-    if(stockIndustry !== '__ALL__' && s.industry !== stockIndustry) continue;
-
-    for(const t of (s.tickers || [])){
-      const q = getQuote(t.ticker, t.display_ticker);
-      const f = getField(q, stockMode);
-      const marketCap = Number(t.market_cap_usd || q?.market_cap_usd || 0);
-      if(!q || !f || !isFinite(f.change)) continue;
-
-      const dollar = f.dollar || 0;
-      const weight = dollar > 0 ? dollar : marketCap;
-      const contrib = f.change * weight;
-
-      const needle = `${t.ticker} ${t.display_ticker} ${t.name} ${s.industry} ${s.kr}`.toLowerCase();
-      if(stockSearch && !needle.includes(stockSearch.toLowerCase())) continue;
-
-      rows.push({
-        industry:s.industry,
-        kr:s.kr,
-        hts_no:s.hts_no,
-        has_kr_watchlist:!!s.has_kr_watchlist,
-        ticker:t.ticker,
-        display_ticker:t.display_ticker || t.ticker,
-        name:t.name,
-        price:f.price,
-        change:f.change,
-        volume:f.volume,
-        dollar_volume:dollar,
-        market_cap_usd:marketCap,
-        contribution:contrib,
-        source:f.weightType
+    const code = r[def.code] || 'NA';
+    const name = r[def.name] || '미분류';
+    const key = `${code}|${name}`;
+    if(!map.has(key)){
+      map.set(key, {
+        market,
+        level,
+        code,
+        name,
+        sector: r.sector,
+        industry_group: r.industry_group,
+        industry: r.industry,
+        records: []
       });
     }
+    map.get(key).records.push(r);
   }
 
-  rows.sort((a,b)=> (b.dollar_volume - a.dollar_volume) || (b.contribution - a.contribution) || (b.market_cap_usd - a.market_cap_usd));
+  const rows = Array.from(map.values()).map(calcGroupMetrics);
+  computeScores(rows);
   return rows;
 }
-function sessionText(){
-  const s = prices?.session || '—';
-  return SESSION_LABEL[s] || s;
-}
-function updatedText(){
-  const t = prices?.updated_at || prices?.updated_at_kst;
-  if(!t) return '—';
-  try{
-    const d = new Date(t);
-    if(!isFinite(d.getTime())) return String(t);
-    return d.toLocaleString('ko-KR', {hour12:false});
-  }catch(e){ return t; }
-}
-function setMeta(){
-  document.getElementById('mSession').textContent = sessionText();
-  document.getElementById('mDate').textContent = prices?.date_key || '—';
+function calcGroupMetrics(g){
+  let valid = 0, up = 0, down = 0;
+  let dollar = 0, avg20 = 0, posDollar = 0, negDollar = 0;
+  let weightedNum = 0;
+  let priceable = 0;
 
-  const locked = prices?.regular_final_locked;
-  const lockEl = document.getElementById('mLocked');
-  lockEl.textContent = locked ? '고정됨' : '본장 진행중';
-  lockEl.className = 'meta-value ' + (locked ? 'green' : 'warn');
+  for(const r of g.records){
+    const p = getPrice(g.market, r.code);
+    if(!p) continue;
+    priceable += 1;
+    valid += 1;
+    if(p.change > 0) up += 1;
+    if(p.change < 0) down += 1;
 
-  document.getElementById('mUpdated').textContent = updatedText();
-
-  const c = prices?.counts || {};
-  if(prices?.source === 'regular_cache_plus_live_api'){
-    document.getElementById('mCounts').textContent =
-      `${c.ok ?? 0}/${c.symbols ?? 0} OK · 실시간 미갱신 ${c.live_failed ?? 0}`;
-  }else{
-    document.getElementById('mCounts').textContent = `${c.ok ?? 0}/${c.symbols ?? 0} OK · 실패 ${c.failed ?? 0}`;
-  }
-}
-function setNotice(){
-  const el = document.getElementById('notice');
-  const msgs = [];
-
-  if(!String(prices?.schema_version || '').startsWith('gics74_prices_v')){
-    msgs.push('현재 cache/prices.json이 구버전일 수 있습니다. GitHub Actions가 한 번 실행된 뒤 정상 데이터로 바뀝니다.');
-  }
-
-  if(prices?.source === 'regular_cache_plus_live_api'){
-    msgs.push('GitHub 캐시가 오래되어 본장 자금흐름은 전일 확정값으로 유지하고, 실시간 흐름은 Vercel API로 성공한 종목만 계산합니다. 미갱신 종목은 실시간 계산에서 제외됩니다.');
-  }else if(prices?.source === 'vercel_api_quote_fallback'){
-    msgs.push('GitHub 캐시가 오래되어 Vercel API로 직접 실시간 재조회했습니다. GitHub Actions 상태는 별도로 확인하는 게 좋습니다.');
-  }
-
-  if(prices?.updated_at){
-    const ageMin = (Date.now() - new Date(prices.updated_at).getTime()) / 60000;
-    if(isFinite(ageMin) && ageMin > 25){
-      msgs.push(`가격 캐시가 ${Math.round(ageMin)}분 전 데이터입니다. GitHub Actions의 Fetch Prices 실행 상태를 확인하세요.`);
+    const w = p.dollar > 0 ? p.dollar : 0;
+    if(w > 0){
+      dollar += w;
+      weightedNum += p.change * w;
+      if(p.change > 0) posDollar += w;
+      else if(p.change < 0) negDollar += w;
     }
-  }
-  if(activeTab === 'live'){
-    const liveRows = sectorMetrics('live');
-    const noLiveDollar = liveRows.filter(r=>r.live_dollar_count===0).length;
-    if(noLiveDollar > 0){
-      msgs.push('Yahoo에서 프리/애프터 거래량이 안 잡히는 섹터는 실시간 탭에서 전일 본장 거래대금으로 대체 계산합니다. 전일 거래대금도 없을 때만 시총가중을 씁니다.');
-    }
-  }
-  if(activeTab === 'regular' && prices?.regular_final_locked === false){
-    msgs.push('현재 본장 진행 중이면 본장 자금흐름은 아직 확정값이 아니라 실시간으로 변합니다.');
+    if(p.avg20 > 0) avg20 += p.avg20;
   }
 
-  if(msgs.length){
-    el.innerHTML = msgs.map(esc).join('<br>');
-    el.classList.remove('hidden');
-  }else{
-    el.classList.add('hidden');
-    el.innerHTML = '';
-  }
+  const weighted = dollar > 0 ? weightedNum / dollar : null;
+  const breadth = valid > 0 ? up / valid * 100 : null;
+  const netDollar = posDollar - negDollar;
+  const dollarBias = dollar > 0 ? netDollar / dollar * 100 : null;
+  const rvol = avg20 > 0 && dollar > 0 ? dollar / avg20 : null;
+
+  return {
+    ...g,
+    count:g.records.length,
+    valid,
+    priceable,
+    up,
+    down,
+    dollar,
+    avg20,
+    rvol,
+    weighted,
+    breadth,
+    netDollar,
+    dollarBias,
+    dollarShare:0,
+    score:0,
+    rank:null,
+    rankPct:null
+  };
 }
-function setControls(){
-  const c = document.getElementById('controls');
-
-  if(activeTab === 'regular' || activeTab === 'live'){
-    c.innerHTML = `
-      <span class="control-label">정렬</span>
-      <select id="sortSel" onchange="sortMode=this.value; render()">
-        <option value="score" ${sortMode==='score'?'selected':''}>종합점수</option>
-        <option value="dollar" ${sortMode==='dollar'?'selected':''}>거래대금 총액</option>
-        <option value="rvol" ${sortMode==='rvol'?'selected':''}>RVOL</option>
-        <option value="breadth" ${sortMode==='breadth'?'selected':''}>상승비율</option>
-        <option value="weighted" ${sortMode==='weighted'?'selected':''}>거래대금가중 등락률</option>
-        <option value="netdollar" ${sortMode==='netdollar'?'selected':''}>순매수성 거래대금</option>
-        <option value="hts" ${sortMode==='hts'?'selected':''}>HTS 번호순</option>
-      </select>
-      <span class="small">기본은 종합점수: 거래대금 30% + RVOL 25% + 상승비율 20% + 가중등락 20% + 순매수성 5%</span>
-    `;
-    return;
+function computeScores(rows){
+  const totalDollar = rows.reduce((a,r)=>a+(r.dollar||0),0);
+  for(const r of rows){
+    r.dollarShare = totalDollar > 0 ? r.dollar / totalDollar * 100 : 0;
   }
 
-  if(activeTab === 'stocks'){
-    const opts = sectors.map(s=>`<option value="${esc(s.industry)}" ${stockIndustry===s.industry?'selected':''}>${s.hts_no ? s.hts_no+' ' : '— '}${esc(s.kr)} · ${esc(s.industry)}</option>`).join('');
-    c.innerHTML = `
-      <span class="control-label">기준</span>
-      <select onchange="stockMode=this.value; render()">
-        <option value="regular" ${stockMode==='regular'?'selected':''}>본장 기준</option>
-        <option value="live" ${stockMode==='live'?'selected':''}>실시간 기준</option>
-      </select>
-      <span class="control-label">섹터</span>
-      <select onchange="stockIndustry=this.value; render()">
-        <option value="__ALL__" ${stockIndustry==='__ALL__'?'selected':''}>전체 섹터</option>
-        ${opts}
-      </select>
-      <input placeholder="티커/종목/섹터 검색" value="${esc(stockSearch)}" oninput="stockSearch=this.value; renderStocks()">
-    `;
-    return;
+  const logs = rows.map(r => Math.log10(Math.max(r.dollar || 0, 1)));
+  const minLog = Math.min(...logs);
+  const maxLog = Math.max(...logs);
+  const range = maxLog - minLog;
+
+  for(const r of rows){
+    const logDollar = Math.log10(Math.max(r.dollar || 0, 1));
+    const dollarScore = range > 0 ? (logDollar - minLog) / range * 100 : 0;
+    const rvolScore = r.rvol ? Math.max(0, Math.min(100, r.rvol / 3 * 100)) : 0;
+    const breadthScore = r.breadth === null ? 0 : Math.max(0, Math.min(100, r.breadth));
+    const weightedScore = r.weighted === null ? 0 : Math.max(0, Math.min(100, ((r.weighted + 3) / 10) * 100));
+    const netScore = r.dollarBias === null ? 0 : Math.max(0, Math.min(100, (r.dollarBias + 100) / 2));
+
+    r.score =
+      dollarScore * 0.30 +
+      rvolScore * 0.25 +
+      breadthScore * 0.20 +
+      weightedScore * 0.20 +
+      netScore * 0.05;
   }
 
-  c.innerHTML = `<span class="small">데이터 상태 확인용 탭입니다.</span>`;
+  const sorted = [...rows].sort((a,b)=>(b.score-a.score)||(b.dollar-a.dollar));
+  const n = sorted.length;
+  sorted.forEach((r,i)=>{
+    r.rank = i + 1;
+    r.rankPct = n > 1 ? i / (n - 1) : 0;
+  });
 }
-function renderSectorTable(mode){
-  const rows = sectorMetrics(mode);
-  const label = mode === 'regular' ? '본장' : '실시간';
+function sortRows(rows, market){
+  const s = state.sort;
+  const arr = [...rows];
 
-  const html = `
+  const sorters = {
+    score:(a,b)=>(b.score-a.score)||(b.dollar-a.dollar),
+    dollar_share:(a,b)=>(b.dollarShare-a.dollarShare)||(b.score-a.score),
+    rvol:(a,b)=>((b.rvol||0)-(a.rvol||0))||(b.score-a.score),
+    weighted:(a,b)=>((b.weighted??-999)-(a.weighted??-999))||(b.score-a.score),
+    us_rank:(a,b)=>(a.us?.rank??999)-(b.us?.rank??999),
+    kr_rank:(a,b)=>(a.kr?.rank??999)-(b.kr?.rank??999),
+    follow:(a,b)=>(b.followScore-a.followScore)||((a.us?.rank??999)-(b.us?.rank??999))
+  };
+
+  if(market === 'follow') return arr.sort(sorters[s] || sorters.follow);
+  return arr.sort(sorters[s] || sorters.score);
+}
+function renderMeta(){
+  const usDate = usCache?.date_key || '—';
+  const krDate = krCache?.date_key || '—';
+  const usCount = usCache?.counts?.ok ?? Object.keys(usCache?.us || {}).length;
+  const krCount = krCache?.counts?.ok ?? Object.keys(krCache?.kr || {}).length;
+  const masterKR = records.filter(r=>r.market==='KR').length;
+  const masterUS = records.filter(r=>r.market==='US').length;
+
+  document.getElementById('meta').innerHTML = `
+    <div class="meta-card"><div class="meta-label">미장 선행일</div><div class="meta-value accent">${esc(usDate)}</div></div>
+    <div class="meta-card"><div class="meta-label">국장 반응일</div><div class="meta-value accent">${esc(krDate)}</div></div>
+    <div class="meta-card"><div class="meta-label">미장 가격수집</div><div class="meta-value green">${fmtNum(usCount)} / ${fmtNum(masterUS)}</div></div>
+    <div class="meta-card"><div class="meta-label">국장 가격수집</div><div class="meta-value ${krCache?'green':'warn'}">${krCache ? `${fmtNum(krCount)} / ${fmtNum(masterKR)}` : '대기'}</div></div>
+    <div class="meta-card"><div class="meta-label">현재 분류</div><div class="meta-value">${LEVELS[state.level].label}</div></div>
+    <div class="meta-card"><div class="meta-label">모드</div><div class="meta-value">종가 전용</div></div>
+  `;
+}
+function renderFlow(market){
+  const rows = sortRows(groupRecords(market, state.level), market);
+  lastRows = rows.map(r => ({
+    market, level:LEVELS[state.level].label, rank:r.rank, code:r.code, name:r.name,
+    count:r.count, valid:r.valid, score:r.score, weighted:r.weighted, breadth:r.breadth,
+    dollarShare:r.dollarShare, dollar:r.dollar, rvol:r.rvol, netDollar:r.netDollar
+  }));
+
+  const title = market === 'US' ? '미장 종가 자금흐름' : '국장 종가 자금흐름';
+  const date = market === 'US' ? usCache?.date_key : krCache?.date_key;
+
+  if(market === 'KR' && !krCache){
+    return `<div class="empty">아직 국장 종가 캐시가 없습니다.<br>Actions에서 fetch_kr_prices.py가 한 번 돌아가면 cache/kr_prices.json이 생성됩니다.</div>`;
+  }
+
+  return `
+    <div class="card-grid">
+      <div class="info-card"><div class="info-title">${title}</div><div class="info-value">${esc(date || '—')}</div><div class="info-desc">정규장 종가 기준</div></div>
+      <div class="info-card"><div class="info-title">분류 단계</div><div class="info-value">${LEVELS[state.level].label}</div><div class="info-desc">11 / 25 / 74 선택 가능</div></div>
+      <div class="info-card"><div class="info-title">비교 방식</div><div class="info-value">시장내 점수</div><div class="info-desc">거래대금 30 + RVOL 25 + 상승비율 20 + 가중등락 20 + 순매수성 5</div></div>
+    </div>
+    ${flowTable(rows, market)}
+  `;
+}
+function flowTable(rows, market){
+  if(!rows.length) return `<div class="empty">표시할 데이터가 없습니다.</div>`;
+  return `
     <div class="table-wrap">
       <table>
         <thead>
           <tr>
             <th>순위</th>
-            <th>HTS</th>
-            <th>섹터</th>
-            <th>매칭</th>
+            <th>코드</th>
+            <th>분류</th>
+            <th>종목</th>
+            <th>성공</th>
             <th>점수</th>
-            <th>${label} 가중등락</th>
+            <th>가중등락</th>
             <th>상승비율</th>
+            <th>거래대금비중</th>
             <th>거래대금</th>
             <th>RVOL</th>
             <th>순매수성</th>
-            <th>종목</th>
-            <th>성공</th>
-            <th>가중</th>
           </tr>
         </thead>
         <tbody>
           ${rows.map(r=>`
             <tr>
-              <td><span class="rank ${r.rank<=3?'top3':''}">${r.rank}</span></td>
-              <td>${r.hts_no ? `<span class="hts">${r.hts_no}</span>` : `<span class="hts none">—</span>`}</td>
-              <td>
-                <div class="industry-en">${esc(r.industry)}</div>
-                <div class="industry-kr">${esc(r.kr)}</div>
-              </td>
-              <td>${r.has_kr_watchlist ? '<span class="badge ok">HTS</span>' : '<span class="badge no">미장만</span>'}</td>
+              <td><span class="rank">#${r.rank}</span></td>
+              <td class="code">${esc(r.code)}</td>
+              <td><span class="name">${esc(r.name)}</span><span class="sub">${esc(r.sector)} · ${esc(r.industry_group)}</span></td>
+              <td class="mono">${fmtNum(r.count)}</td>
+              <td class="mono">${fmtNum(r.valid)}</td>
               <td class="mono score-cell">${fmtScore(r.score)}</td>
-              <td class="${cls(r.weighted_change)} mono">${fmtPct(r.weighted_change)}</td>
-              <td class="mono">${fmtPct(r.breadth*100)} <span class="small">(${r.up}/${r.valid})</span></td>
-              <td class="mono">${fmtMoney(r.dollar_volume)}</td>
-              <td class="mono">${fmtRvol(r.sector_rvol)}</td>
-              <td class="${cls(r.net_dollar)} mono">${fmtMoney(r.net_dollar)}</td>
-              <td class="mono">${r.ticker_count}</td>
-              <td class="mono">${r.valid}</td>
-              <td><span class="badge ${r.weight_note==='시총대체'?'no':'ok'}">${esc(r.weight_note)}</span></td>
+              <td class="${cls(r.weighted)} mono">${fmtPct(r.weighted)}</td>
+              <td class="mono">${fmtPct(r.breadth)} <span class="sub">(${r.up}/${r.valid})</span></td>
+              <td class="mono">${fmtPct(r.dollarShare)}</td>
+              <td class="mono">${fmtMoney(r.dollar, market)}</td>
+              <td class="mono">${fmtRvol(r.rvol)}</td>
+              <td class="${cls(r.netDollar)} mono">${fmtMoney(r.netDollar, market)}</td>
             </tr>
           `).join('')}
         </tbody>
       </table>
     </div>
   `;
-  document.getElementById('main').innerHTML = html;
 }
-function renderStocks(){
-  const rows = stockRows();
+function mergeFollow(){
+  const usRows = groupRecords('US', state.level);
+  const krRows = krCache ? groupRecords('KR', state.level) : [];
+  const usMap = new Map(usRows.map(r => [r.code, r]));
+  const krMap = new Map(krRows.map(r => [r.code, r]));
+  const codes = new Set([...usMap.keys(), ...krMap.keys()]);
+  const rows = [];
 
-  const html = `
-    <div class="table-wrap stock-wrap">
-      <table class="stock-table">
-        <thead>
-          <tr>
-            <th>섹터</th>
-            <th>HTS</th>
-            <th>티커</th>
-            <th>종목명</th>
-            <th>등락률</th>
-            <th>가격</th>
-            <th>거래대금</th>
-            <th>거래량</th>
-            <th>시총</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${rows.map(r=>`
-            <tr>
-              <td>
-                <div class="industry-kr">${esc(r.kr)}</div>
-                <div class="small">${esc(r.industry)}</div>
-              </td>
-              <td>${r.hts_no ? `<span class="hts">${r.hts_no}</span>` : `<span class="hts none">—</span>`}</td>
-              <td class="mono">${esc(r.display_ticker)}</td>
-              <td>${esc(r.name)}</td>
-              <td class="${cls(r.change)} mono">${fmtPct(r.change)}</td>
-              <td class="mono">${fmtNum(r.price,2)}</td>
-              <td class="mono">${fmtMoney(r.dollar_volume)}</td>
-              <td class="mono">${fmtNum(r.volume,0)}</td>
-              <td class="mono">${fmtMoney(r.market_cap_usd)}</td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-    </div>
-  `;
-  document.getElementById('main').innerHTML = rows.length ? html : '<div class="empty">표시할 종목이 없습니다.</div>';
-}
-function renderStatus(){
-  const failures = prices?.failures || {};
-  const liveFailures = prices?.live_failures || {};
-  const failKeys = Object.keys(failures);
-  const liveFailKeys = Object.keys(liveFailures);
-  const c = prices?.counts || {};
-  const schema = prices?.schema_version || 'legacy';
+  for(const code of codes){
+    const us = usMap.get(code) || null;
+    const kr = krMap.get(code) || null;
+    const name = us?.name || kr?.name || code;
 
-  const rows = [
-    ['schema_version', schema],
-    ['cache_source', prices?.source === 'regular_cache_plus_live_api' ? '본장 확정 cache + 실시간 API 보충' : (prices?.source === 'vercel_api_quote_fallback' ? 'Vercel API 실시간 재조회' : 'GitHub raw 우선 / Vercel local fallback')],
-    ['session', `${prices?.session || '—'} (${sessionText()})`],
-    ['date_key', prices?.date_key || '—'],
-    ['regular_final_locked', String(prices?.regular_final_locked)],
-    ['updated_at', prices?.updated_at || '—'],
-    ['updated_at_kst', prices?.updated_at_kst || '—'],
-    ['sectors', c.sectors ?? sectors.length],
-    ['symbols', c.symbols ?? '—'],
-    ['ok', c.ok ?? '—'],
-    ['failed', c.failed ?? failKeys.length],
-    ['live_api_unupdated', c.live_failed ?? liveFailKeys.length],
-  ];
+    let rankScore = 0, signScore = 0, responseScore = 0, followScore = 0;
+    if(us && kr){
+      rankScore = Math.max(0, 100 - Math.abs((us.rankPct ?? 1) - (kr.rankPct ?? 1)) * 100);
+      const u = us.weighted || 0;
+      const k = kr.weighted || 0;
+      if(Math.abs(u) < 0.05 || Math.abs(k) < 0.05) signScore = 50;
+      else signScore = Math.sign(u) === Math.sign(k) ? 100 : 0;
 
-  const html = `
-    <div class="table-wrap" style="margin-bottom:10px;">
-      <table>
-        <thead><tr><th>항목</th><th>값</th></tr></thead>
-        <tbody>
-          ${rows.map(([k,v])=>`<tr><td>${esc(k)}</td><td class="mono">${esc(v)}</td></tr>`).join('')}
-        </tbody>
-      </table>
-    </div>
-    <div class="table-wrap" style="margin-bottom:10px;">
-      <table>
-        <thead><tr><th>본장 확정 실패 티커</th><th>사유</th></tr></thead>
-        <tbody>
-          ${failKeys.length ? failKeys.map(k=>`<tr><td class="mono">${esc(k)}</td><td>${esc(failures[k])}</td></tr>`).join('') : '<tr><td colspan="2" class="empty">본장 확정 실패 없음</td></tr>'}
-        </tbody>
-      </table>
-    </div>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>실시간 미갱신 티커</th><th>사유</th></tr></thead>
-        <tbody>
-          ${liveFailKeys.length ? liveFailKeys.slice(0,80).map(k=>`<tr><td class="mono">${esc(k)}</td><td>${esc(liveFailures[k])}</td></tr>`).join('') : '<tr><td colspan="2" class="empty">실시간 미갱신 없음</td></tr>'}
-        </tbody>
-      </table>
-    </div>
-  `;
-  document.getElementById('main').innerHTML = html;
-}
-function render(){
-  setMeta();
-  setControls();
-  setNotice();
+      if(Math.abs(u) > 0.01 && Math.sign(u) === Math.sign(k)){
+        responseScore = Math.max(0, Math.min(100, Math.abs(k) / Math.abs(u) * 100));
+      }
 
-  if(activeTab === 'regular') renderSectorTable('regular');
-  else if(activeTab === 'live') renderSectorTable('live');
-  else if(activeTab === 'stocks') renderStocks();
-  else renderStatus();
-
-  const rows = sectorMetrics('regular');
-  const matched = sectors.filter(s=>s.has_kr_watchlist).length;
-  document.getElementById('footer').textContent =
-    `GICS74 ${sectors.length}개 · HTS 매칭 ${matched}개 · 미장 티커 ${(prices?.counts?.symbols ?? rows.reduce((a,r)=>a+r.ticker_count,0)).toLocaleString()}개 · Built by HJS`;
-}
-function setTab(tab){
-  activeTab = tab;
-  document.querySelectorAll('.tab').forEach(el=>el.classList.toggle('active', el.dataset.tab === tab));
-  render();
-}
-function toCSV(rows){
-  return rows.map(row => row.map(v => {
-    const s = String(v ?? '');
-    return /[",\n]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s;
-  }).join(',')).join('\n');
-}
-function downloadCSV(){
-  let rows = [];
-  let filename = 'gics74_radar.csv';
-
-  if(activeTab === 'stocks'){
-    const data = stockRows();
-    rows.push(['섹터','한글명','HTS','티커','종목명','등락률','가격','거래대금','거래량','시총','기여도']);
-    for(const r of data){
-      rows.push([r.industry,r.kr,r.hts_no||'',r.display_ticker,r.name,r.change,r.price,r.dollar_volume,r.volume,r.market_cap_usd,r.contribution]);
+      followScore = rankScore * 0.45 + signScore * 0.35 + responseScore * 0.20;
     }
-    filename = `gics74_stocks_${stockMode}_${prices?.date_key || 'date'}.csv`;
-  }else{
-    const mode = activeTab === 'live' ? 'live' : 'regular';
-    const data = sectorMetrics(mode);
-    rows.push(['순위','HTS번호','한글명','GICS11','GICS74','HTS매칭','종합점수','가중등락률','상승비율','RVOL','상승종목','성공종목','전체종목','거래대금','20일평균거래대금','순매수성거래대금','가중방식']);
-    for(const r of data){
-      rows.push([r.rank,r.hts_no||'',r.kr,r.gics11,r.industry,r.has_kr_watchlist?'Y':'N',r.score,r.weighted_change,r.breadth,r.sector_rvol,r.up,r.valid,r.ticker_count,r.dollar_volume,r.avg20_dollar_volume,r.net_dollar,r.weight_note]);
-    }
-    filename = `gics74_sector_${mode}_${prices?.date_key || 'date'}.csv`;
+
+    rows.push({code, name, us, kr, rankScore, signScore, responseScore, followScore});
   }
 
-  const blob = new Blob(['\ufeff' + toCSV(rows)], {type:'text/csv;charset=utf-8'});
+  return sortRows(rows, 'follow');
+}
+function renderFollow(){
+  const rows = mergeFollow();
+  lastRows = rows.map(r=>({
+    level:LEVELS[state.level].label,
+    code:r.code,
+    name:r.name,
+    followScore:r.followScore,
+    usRank:r.us?.rank, usScore:r.us?.score, usWeighted:r.us?.weighted, usRvol:r.us?.rvol, usBreadth:r.us?.breadth, usDollarShare:r.us?.dollarShare,
+    krRank:r.kr?.rank, krScore:r.kr?.score, krWeighted:r.kr?.weighted, krRvol:r.kr?.rvol, krBreadth:r.kr?.breadth, krDollarShare:r.kr?.dollarShare
+  }));
+
+  const notice = !krCache
+    ? `<div class="notice">국장 종가 캐시가 아직 없습니다. 지금은 미장 데이터만 보입니다. GitHub Actions에서 새 workflow가 성공하면 비교표가 완성됩니다.</div>`
+    : '';
+
+  return `
+    <div class="card-grid">
+      <div class="info-card"><div class="info-title">비교 기준</div><div class="info-value">${esc(usCache?.date_key || '—')} → ${esc(krCache?.date_key || '—')}</div><div class="info-desc">한국장 시작 전에 끝난 미장 종가와 한국장 종가 비교</div></div>
+      <div class="info-card"><div class="info-title">추종점수</div><div class="info-value">순위+방향+반응</div><div class="info-desc">순위 유사성 45% · 방향 일치 35% · 등락 반응 20%</div></div>
+      <div class="info-card"><div class="info-title">주의</div><div class="info-value">절대값 비교 아님</div><div class="info-desc">미장 대표종목과 국장 전종목 비대칭 → 시장내 표준화</div></div>
+    </div>
+    ${notice}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>분류</th>
+            <th>코드</th>
+            <th>섹터명</th>
+            <th>추종점수</th>
+            <th>미장순위</th>
+            <th>미장점수</th>
+            <th>미장가중등락</th>
+            <th>미장RVOL</th>
+            <th>국장순위</th>
+            <th>국장점수</th>
+            <th>국장가중등락</th>
+            <th>국장RVOL</th>
+            <th>판정</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map(r=>{
+            const verdict = !r.us || !r.kr ? '비교불가' :
+              r.followScore >= 75 ? '강한 추종' :
+              r.followScore >= 55 ? '보통 추종' :
+              r.followScore >= 35 ? '약한 추종' : '불일치';
+            const badgeClass = verdict==='강한 추종' ? 'ok' : verdict==='비교불가' ? 'warn' : '';
+            return `
+            <tr>
+              <td>${LEVELS[state.level].label}</td>
+              <td class="code">${esc(r.code)}</td>
+              <td><span class="name">${esc(r.name)}</span></td>
+              <td class="mono score-cell">${fmtScore(r.followScore)}</td>
+              <td class="mono">${r.us ? '#'+r.us.rank : '—'}</td>
+              <td class="mono">${r.us ? fmtScore(r.us.score) : '—'}</td>
+              <td class="${cls(r.us?.weighted)} mono">${r.us ? fmtPct(r.us.weighted) : '—'}</td>
+              <td class="mono">${r.us ? fmtRvol(r.us.rvol) : '—'}</td>
+              <td class="mono">${r.kr ? '#'+r.kr.rank : '—'}</td>
+              <td class="mono">${r.kr ? fmtScore(r.kr.score) : '—'}</td>
+              <td class="${cls(r.kr?.weighted)} mono">${r.kr ? fmtPct(r.kr.weighted) : '—'}</td>
+              <td class="mono">${r.kr ? fmtRvol(r.kr.rvol) : '—'}</td>
+              <td><span class="badge ${badgeClass}">${verdict}</span></td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+function renderStocks(){
+  const q = state.search.toLowerCase();
+  let rows = records.filter(r=>{
+    if(!q) return false;
+    const hay = `${r.market} ${r.code} ${r.name} ${r.sector} ${r.industry_group} ${r.industry} ${r.sub_industry}`.toLowerCase();
+    return hay.includes(q);
+  }).slice(0, 300);
+
+  lastRows = rows.map(r=>{
+    const p = getPrice(r.market, r.code);
+    return {...r, price:p?.price, change:p?.change, dollar:p?.dollar, rvol:p?.rvol};
+  });
+
+  if(!q) return `<div class="empty">검색어를 입력하면 종목을 찾습니다.</div>`;
+  if(!rows.length) return `<div class="empty">검색 결과가 없습니다.</div>`;
+
+  return `
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>시장</th>
+            <th>코드</th>
+            <th>종목명</th>
+            <th>관종</th>
+            <th>11분류</th>
+            <th>25분류</th>
+            <th>74분류</th>
+            <th>163/커스텀</th>
+            <th>종가</th>
+            <th>등락률</th>
+            <th>거래대금</th>
+            <th>RVOL</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map(r=>{
+            const p = getPrice(r.market, r.code);
+            return `
+            <tr>
+              <td><span class="badge ${r.market==='US'?'us':'kr'}">${r.market}</span></td>
+              <td class="code">${esc(r.code)}</td>
+              <td><span class="name">${esc(r.name)}</span></td>
+              <td class="mono">${esc(r.watchlist_no)}</td>
+              <td>${esc(r.sector)}</td>
+              <td>${esc(r.industry_group)}</td>
+              <td>${esc(r.industry)}</td>
+              <td>${esc(r.sub_industry)}</td>
+              <td class="mono">${p ? fmtNum(p.price, r.market==='KR'?0:2) : '—'}</td>
+              <td class="${cls(p?.change)} mono">${p ? fmtPct(p.change) : '—'}</td>
+              <td class="mono">${p ? fmtMoney(p.dollar, r.market) : '—'}</td>
+              <td class="mono">${p ? fmtRvol(p.rvol) : '—'}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+function render(){
+  renderMeta();
+  showNotice('');
+  document.getElementById('levelSel').value = state.level;
+  document.getElementById('sortSel').value = state.sort;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.tab===state.tab));
+
+  // 추종 탭이 아닐 때 추종 전용 정렬이면 자동 보정
+  const sortSel = document.getElementById('sortSel');
+  for(const opt of sortSel.options){
+    if(['follow','us_rank','kr_rank'].includes(opt.value)) opt.disabled = state.tab !== 'follow';
+    else opt.disabled = false;
+  }
+  if(state.tab !== 'follow' && ['follow','us_rank','kr_rank'].includes(state.sort)){
+    state.sort = 'score';
+    sortSel.value = 'score';
+  }
+  if(state.tab === 'follow' && !state.sort) state.sort = 'follow';
+
+  const main = document.getElementById('main');
+  if(!master){
+    main.innerHTML = `<div class="empty">데이터 로딩 중...</div>`;
+    return;
+  }
+
+  if(state.tab === 'us') main.innerHTML = renderFlow('US');
+  else if(state.tab === 'kr') main.innerHTML = renderFlow('KR');
+  else if(state.tab === 'stocks') main.innerHTML = renderStocks();
+  else main.innerHTML = renderFollow();
+}
+function setTab(tab){
+  state.tab = tab;
+  if(tab === 'follow' && !['follow','score','dollar_share','rvol','weighted','us_rank','kr_rank'].includes(state.sort)) state.sort = 'follow';
+  if(tab !== 'follow' && ['follow','us_rank','kr_rank'].includes(state.sort)) state.sort = 'score';
+  render();
+}
+function toCsvCell(v){
+  if(v === null || v === undefined) return '';
+  const s = String(v);
+  if(/[",\n]/.test(s)) return `"${s.replace(/"/g,'""')}"`;
+  return s;
+}
+function downloadCSV(){
+  if(!lastRows.length) return;
+  const keys = Object.keys(lastRows[0]);
+  const csv = [keys.join(',')].concat(lastRows.map(r=>keys.map(k=>toCsvCell(r[k])).join(','))).join('\n');
+  const blob = new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = filename;
+  a.download = `gics_close_radar_${state.tab}_${state.level}_${new Date().toISOString().slice(0,10)}.csv`;
   a.click();
   URL.revokeObjectURL(a.href);
 }
-async function loadData(force=false){
-  const btn = document.getElementById('refBtn');
-  const ov = document.getElementById('ov');
+async function loadAll(force=false){
+  const btn = document.getElementById('reloadBtn');
   btn.classList.add('loading');
-  ov.classList.remove('hidden');
+  btn.textContent = '로딩중';
 
   try{
-    const [sectorData, rawPriceData] = await Promise.all([
-      fetchJSON('./sectors_data.json', force),
-      fetchPricesJSON(force),
+    const [m,u,k] = await Promise.all([
+      fetchJSONFrom(URLS.master, force),
+      fetchJSONFrom(URLS.us, force),
+      fetchJSONFrom(URLS.kr, force, true)
     ]);
 
-    sectors = Array.isArray(sectorData) ? sectorData : [];
-    let priceData = rawPriceData || {};
+    master = m;
+    records = normalizeRecords(m.records || []);
+    usCache = u;
+    krCache = k;
 
-    if(!sectors.length) throw new Error('sectors_data.json이 비어 있습니다.');
-
-    // 캐시가 20분 이상 오래되면 Vercel /api/quote로 실시간 값만 보충한다.
-    // 주의: 본장 진행 중에는 본장 자금흐름 탭의 regular_*는 전일 확정 캐시값을 유지해야 한다.
-    const age = cacheAgeMinutes(priceData);
-    if(!priceData.us || age > 20){
-      const livePriceData = await fetchLivePricesFromApi(sectors, priceData);
-      priceData = mergeFinalCacheWithLive(priceData, livePriceData, sectors);
-    }
-
-    prices = priceData || {};
-
-    if(!prices.us) throw new Error('가격 데이터가 없습니다.');
+    const msg = [];
+    if(!krCache) msg.push('국장 종가 캐시가 아직 없습니다. 새 workflow가 성공하면 cache/kr_prices.json이 생성됩니다.');
+    if(!usCache?.us) msg.push('미장 가격 캐시 형식이 예상과 다릅니다.');
+    if(msg.length) showNotice(msg.join('<br>'));
 
     render();
   }catch(e){
     console.error(e);
-    document.getElementById('main').innerHTML = `<div class="empty">데이터 로딩 실패<br>${esc(e.message)}</div>`;
+    document.getElementById('main').innerHTML = `<div class="empty">데이터 로딩 실패<br>${esc(e.message || e)}</div>`;
   }finally{
     btn.classList.remove('loading');
-    ov.classList.add('hidden');
+    btn.textContent = '새로고침';
   }
 }
-loadData(false);
+
+loadAll(false);
 </script>
 </body>
 </html>
